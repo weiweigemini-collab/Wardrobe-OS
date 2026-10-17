@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wardrobe OS v4.1 — Spec-verified Mood Lab × Chromatic</title>
+<style>
+:root{
+  --wine:#6e2638;--wine2:#8a4657;--cream:#f5f0e8;--paper:#fffdf9;
+  --ink:#30272a;--muted:#817579;--line:#e6ddd4;--soft:#eee5dc;
+  --green:#39735b;--shadow:0 12px 32px rgba(48,39,42,.08);--radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #c89aa5;outline-offset:2px}
+.app{min-height:100vh;display:grid;grid-template-columns:240px minmax(0,1fr)}
+.sidebar{background:var(--paper);border-right:1px solid var(--line);padding:26px 16px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh}
+.brand{display:flex;gap:11px;align-items:center;padding:0 8px}
+.brand-mark{width:42px;height:42px;border-radius:13px;background:var(--wine);color:#fff;display:grid;place-items:center;font-size:22px}
+.brand-name{font-family:Georgia,serif;font-size:21px;font-weight:700;letter-spacing:-.6px}
+.brand-sub{font-size:9px;letter-spacing:1.7px;color:var(--muted);margin-top:4px}
+.nav-label{font-size:10px;color:#a09598;letter-spacing:1.8px;padding:0 12px;margin-bottom:7px}
+.nav{display:grid;gap:5px}
+.nav-btn{border:0;background:transparent;color:#75696c;padding:12px;border-radius:12px;display:flex;align-items:center;gap:12px;text-align:left;font-size:14px;transition:.18s}
+.nav-btn .ico{width:22px;text-align:center;font-size:17px}
+.nav-btn:hover{background:#f8f2ed}
+.nav-btn.active{background:#f0e4e3;color:var(--wine);font-weight:700}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding:16px 8px 0;color:var(--muted);font-size:11px;line-height:1.6}
+.main{min-width:0;padding:28px clamp(18px,3vw,42px) 44px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:26px}
+.eyebrow{font-size:10px;letter-spacing:2px;color:var(--wine2);font-weight:800}
+h1{font-size:clamp(25px,3vw,34px);letter-spacing:-1px;margin:7px 0 4px;font-family:Georgia,"Noto Serif TC",serif}
+.subtitle{color:var(--muted);font-size:13px;line-height:1.6}
+.top-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:11px;padding:10px 14px;font-size:12px;font-weight:650;transition:.15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(48,39,42,.07)}
+.btn.primary{background:var(--wine);color:#fff;border-color:var(--wine)}
+.btn.primary:hover{background:#57202e}
+.btn.soft{background:#f0e4e3;color:var(--wine);border-color:#ead8da}
+.btn.danger{color:#a33b47}
+.btn.small{padding:7px 10px;font-size:11px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.view{display:none;animation:fade .2s ease}.view.active{display:block}
+@keyframes fade{from{opacity:.5;transform:translateY(3px)}to{opacity:1;transform:none}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:23px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}
+.stat-icon{background:#f0e4e3;color:var(--wine);border-radius:10px;width:33px;height:33px;display:grid;place-items:center;font-size:16px}
+.stat-num{font-family:Georgia,serif;font-size:30px;margin-top:12px}
+.stat-note{font-size:11px;color:var(--muted);margin-top:3px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:24px 0 14px}
+.section-head h2{font-size:17px;margin:0;letter-spacing:-.3px}
+.section-head p{font-size:12px;color:var(--muted);margin:5px 0 0}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.quick-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:21px;display:flex;align-items:flex-start;gap:15px;text-align:left;width:100%;color:inherit}
+.quick-card:hover{border-color:#c8a5ab;box-shadow:var(--shadow)}
+.quick-icon{width:45px;height:45px;border-radius:13px;background:#f0e4e3;color:var(--wine);display:grid;place-items:center;font-size:21px;flex-shrink:0}
+.quick-card strong{font-size:14px;display:block;margin:2px 0 6px}
+.quick-card span{font-size:12px;color:var(--muted);line-height:1.6}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}
+.search{position:relative;flex:1;min-width:180px}
+.search input{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:11px 13px 11px 36px;color:var(--ink)}
+.search:before{content:"⌕";position:absolute;left:13px;top:6px;font-size:22px;color:var(--muted)}
+select,.field-input{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--ink);min-width:120px}
+.clothing-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.clothing-card{background:var(--paper);border:1px solid var(--line);border-radius:15px;overflow:hidden;min-width:0;transition:.18s}
+.clothing-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.garment-visual{height:175px;display:grid;place-items:center;position:relative;overflow:hidden;background:linear-gradient(145deg,#f2e9df,#e6d8cb)}
+.garment-visual .emoji{font-size:67px;filter:drop-shadow(0 8px 5px rgba(48,39,42,.10));}
+.garment-visual .mini-label{position:absolute;top:10px;left:10px;background:rgba(255,253,249,.85);border-radius:7px;padding:5px 7px;font-size:9px;color:var(--wine);letter-spacing:.7px}
+.garment-visual img{width:100%;height:100%;object-fit:cover}
+.card-body{padding:12px}
+.card-title{font-size:13px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{font-size:11px;color:var(--muted);margin:5px 0 10px}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tag{background:#f2eae4;color:#75666a;font-size:9px;padding:4px 7px;border-radius:99px}
+.card-actions{display:flex;gap:6px}
+.card-actions .btn{flex:1}
+.empty{padding:44px 18px;text-align:center;background:var(--paper);border:1px dashed #d7c8bd;border-radius:var(--radius);color:var(--muted)}
+.empty .empty-icon{font-size:35px;margin-bottom:10px}
+.empty strong{display:block;color:var(--ink);margin-bottom:7px}
+.studio-layout{display:grid;grid-template-columns:minmax(180px,.82fr) minmax(290px,1.5fr) minmax(245px,1fr);gap:14px;align-items:start}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;min-width:0}
+.panel-head{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panel-head h3{margin:0;font-size:13px}
+.panel-head small{color:var(--muted);font-size:10px}
+.panel-body{padding:13px}
+.closet-mini-search{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:12px}
+.mini-filters{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}
+.filter-chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 8px;font-size:10px;color:var(--muted)}
+.filter-chip.active{background:#f0e4e3;border-color:#ead8da;color:var(--wine)}
+.mini-list{display:grid;gap:8px;max-height:590px;overflow:auto;padding-right:2px}
+.mini-item{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:11px;padding:7px;text-align:left;background:#fff;color:inherit;width:100%}
+.mini-item:hover{border-color:#bd929b}
+.mini-thumb{width:47px;height:54px;border-radius:8px;display:grid;place-items:center;font-size:25px;flex-shrink:0;background:#eee3d8;overflow:hidden}
+.mini-thumb img{width:100%;height:100%;object-fit:cover}
+.mini-info{min-width:0;flex:1}
+.mini-info strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-info small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
+.add-symbol{font-size:18px;color:var(--wine)}
+.canvas-panel{background:#eee5dc}
+.canvas-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.canvas-title{border:0;background:transparent;font-family:Georgia,"Noto Serif TC",serif;font-size:18px;font-weight:700;min-width:0;width:100%;color:var(--ink)}
+.canvas-title:focus{outline:none;border-bottom:1px solid var(--wine)}
+.canvas-note{font-size:10px;color:var(--muted);white-space:nowrap}
+.outfit-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.outfit-slot{background:rgba(255,253,249,.8);border:1px solid #dfd1c6;border-radius:13px;overflow:hidden;min-width:0}
+.slot-visual{height:135px;display:grid;place-items:center;position:relative;background:linear-gradient(145deg,#f8f1e8,#e2d2c4);font-size:55px}
+.slot-visual img{width:100%;height:100%;object-fit:cover}
+.slot-empty{color:#a99a91;font-size:11px;text-align:center;padding:12px}
+.slot-label{position:absolute;top:7px;left:7px;background:rgba(255,253,249,.88);border-radius:6px;padding:4px 6px;font-size:9px;color:#75696c}
+.slot-lock{position:absolute;right:7px;top:7px;border:0;border-radius:7px;background:rgba(255,253,249,.92);padding:5px 7px;font-size:11px}
+.slot-details{padding:9px}
+.slot-details strong{font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-details small{display:block;color:var(--muted);font-size:10px;margin:4px 0 8px}
+.slot-actions{display:flex;gap:5px}
+.slot-actions .btn{flex:1;padding:6px 4px;font-size:10px}
+.canvas-footer{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.canvas-footer small{font-size:10px;color:var(--muted)}
+.assistant-body{padding:13px}
+.assistant-intro{font-size:11px;line-height:1.7;color:var(--muted);margin:0 0 12px}
+.chat-log{display:flex;flex-direction:column;gap:10px;max-height:290px;overflow:auto;margin:0 0 12px;padding:1px}
+.bubble{font-size:11px;line-height:1.65;padding:10px 11px;border-radius:12px;max-width:96%;white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble.assistant{background:#f2eae4;border-top-left-radius:4px;align-self:flex-start}
+.bubble.user{background:var(--wine);color:#fff;border-top-right-radius:4px;align-self:flex-end}
+.quick-prompts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.prompt-chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 8px;font-size:10px;color:#75666a}
+.prompt-chip:hover{border-color:#bd929b;color:var(--wine)}
+.chat-input-wrap{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px}
+.chat-input{width:100%;border:0;resize:vertical;min-height:66px;max-height:150px;font-size:12px;color:var(--ink);outline:none}
+.chat-bottom{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.chat-hint{font-size:9px;color:#a09598;line-height:1.4}
+.proposal{border:1px solid #d8c0c4;background:#fffaf8;border-radius:12px;padding:11px;margin-top:12px}
+.proposal h4{margin:0 0 8px;font-size:12px}
+.proposal-item{display:flex;gap:8px;align-items:flex-start;margin:8px 0;font-size:10px;line-height:1.6}
+.proposal-item .dot{color:var(--wine);font-weight:bold}
+.proposal-actions{display:flex;gap:6px;margin-top:10px}
+.proposal-actions .btn{flex:1;padding:8px 6px;font-size:10px}
+.outfit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.saved-card{background:var(--paper);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.saved-preview{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;padding:10px;background:#eee5dc}
+.saved-mini{height:82px;display:grid;place-items:center;background:#f8f1e8;border-radius:8px;font-size:33px;overflow:hidden}
+.saved-mini img{width:100%;height:100%;object-fit:cover}
+.saved-body{padding:13px}
+.saved-body h3{margin:0 0 5px;font-size:13px}
+.saved-body p{font-size:10px;color:var(--muted);margin:0 0 12px}
+.saved-actions{display:flex;gap:6px}.saved-actions .btn{flex:1}
+.modal-backdrop{position:fixed;inset:0;background:rgba(35,24,28,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--paper);border-radius:20px;width:min(500px,100%);max-height:90vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.2)}
+.modal-head{padding:20px 22px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal-head h2{margin:0;font-family:Georgia,serif;font-size:22px}
+.icon-btn{border:0;background:transparent;font-size:23px;color:var(--muted);padding:2px 7px}
+.modal-content{padding:20px 22px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-field{display:grid;gap:6px}.form-field.full{grid-column:1/-1}
+.form-field label{font-size:11px;font-weight:700;color:#68595d}
+.form-field input,.form-field select,.form-field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:var(--ink);font-size:12px}
+.form-field textarea{min-height:75px;resize:vertical}
+.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.color-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#30272a;color:#fff;padding:12px 17px;border-radius:12px;font-size:12px;z-index:100;box-shadow:var(--shadow);transition:.25s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.mobile-nav{display:none}
+.helper-note{font-size:11px;line-height:1.7;color:var(--muted);background:#f8f2ed;border-radius:11px;padding:11px;margin-top:12px}
+@media(max-width:1180px){
+ .app{grid-template-columns:205px minmax(0,1fr)}.sidebar{padding:22px 12px}
+ .studio-layout{grid-template-columns:minmax(160px,.75fr) minmax(270px,1.4fr)}.assistant-panel{grid-column:1/-1}
+ .assistant-panel .panel-body{display:grid;grid-template-columns:1fr 1fr;gap:15px}.assistant-panel .panel-head{grid-column:1/-1}
+ .chat-log{max-height:220px}.clothing-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .app{display:block;padding-bottom:76px}.sidebar{display:none}.main{padding:21px 15px 30px}
+ .topbar{align-items:flex-start}.top-actions .btn{padding:9px 10px}.top-actions .optional{display:none}
+ .stats{gap:8px}.stat{padding:13px}.stat-num{font-size:25px}.stat-top{font-size:10px}.stat-icon{width:28px;height:28px}
+ .quick-grid{grid-template-columns:1fr}.clothing-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .garment-visual{height:145px}.card-body{padding:10px}.card-actions{flex-wrap:wrap}
+ .studio-layout{grid-template-columns:1fr}.assistant-panel{grid-column:auto}
+ .closet-panel{order:2}.canvas-panel{order:1}.assistant-panel{order:3}
+ .closet-panel .panel-body{display:block}.mini-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:300px}
+ .mini-item{gap:6px}.mini-thumb{width:40px;height:45px}
+ .assistant-panel .panel-body{display:block}.chat-log{max-height:240px}
+ .slot-visual{height:130px}.outfit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mobile-nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;background:rgba(255,253,249,.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 4px max(8px,env(safe-area-inset-bottom));z-index:30}
+ .mobile-nav button{border:0;background:transparent;display:grid;justify-items:center;gap:4px;color:#8a7d80;font-size:9px;padding:5px 0}
+ .mobile-nav button span:first-child{font-size:18px}.mobile-nav button.active{color:var(--wine);font-weight:800}
+ .form-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}
+}
+@media(max-width:390px){.stats{grid-template-columns:1fr}.stat{display:flex;align-items:center;justify-content:space-between}.stat-num{margin:0}.outfit-grid{grid-template-columns:1fr}.slot-visual{height:115px}}
+
+/* Mood-driven Outfit Studio — offline, responsive visual worlds */
+.mood-stage{--mood-accent:#a74b67;--mood-ink:#fff6f0;position:relative;isolation:isolate;overflow:hidden;border-radius:18px;min-height:295px;margin-bottom:14px;background:#25141d;color:var(--mood-ink);box-shadow:0 18px 40px rgba(20,10,18,.18)}
+.mood-scene,.mood-shade{position:absolute;inset:0;pointer-events:none}.mood-scene{background-size:cover;background-position:center;transition:opacity .45s ease,transform 1.1s ease;transform:scale(1.02)}.mood-stage:hover .mood-scene{transform:scale(1.06)}.mood-shade{background:linear-gradient(90deg,rgba(10,8,18,.75),rgba(10,8,18,.18) 85%),linear-gradient(0deg,rgba(8,8,13,.67),transparent 75%)}
+.mood-content{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;min-height:295px;padding:23px}.mood-kicker{font-size:10px;letter-spacing:3px;font-weight:800;opacity:.9}.mood-title{font-family:Georgia,'Noto Serif TC',serif;font-size:clamp(31px,4vw,53px);line-height:1.03;margin:12px 0;letter-spacing:-1px}.mood-desc{font-size:12px;line-height:1.8;max-width:290px;color:#f8eeee}.mood-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.mood-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #ffffff75;border-radius:30px;background:#ffffff22;backdrop-filter:blur(8px);padding:7px 10px;font-size:10px}.mood-swatches{display:flex;gap:5px}.mood-swatches i{width:19px;height:19px;border:2px solid #ffffff9c;border-radius:50%;box-shadow:0 2px 8px #0004}
+.mood-controls{background:#fffdf9;border:1px solid var(--line);border-radius:15px;padding:13px;margin-bottom:14px}.mood-controls-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}.mood-controls-top strong{font-size:12px}.mood-controls-top small{font-size:10px;color:var(--muted)}.mood-options{display:flex;flex-wrap:wrap;gap:6px}.mood-choice{background:#f7f1ec;border:1px solid #e6dcd5;border-radius:9px;padding:8px 10px;font-size:11px;color:#55434a}.mood-choice.active{background:#4d2636;color:white;border-color:#4d2636}.mood-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:11px}.mood-actions .btn{font-size:10px}.mood-reason{font-size:10px;color:var(--muted);line-height:1.6;margin-top:10px}.mood-stage[data-mood='cyberpunk'] .mood-title{text-shadow:2px 0 #fa41b4,-2px 0 #00d9ff}.mood-stage[data-mood='cyberpunk'] .mood-kicker{color:#8bf7ff}.mood-stage[data-mood='minimal'] .mood-title{font-weight:400;letter-spacing:-2px}.canvas-panel .panel-body{background:#f6f1eb}.canvas-panel .outfit-slot{background:#fffdf9}.mood-scene-fade{animation:moodAppear .55s ease}@keyframes moodAppear{from{opacity:.3}to{opacity:1}}
+@media(max-width:650px){.mood-stage,.mood-content{min-height:250px}.mood-content{padding:17px}.mood-title{font-size:36px}.mood-desc{max-width:240px}.mood-choice{padding:8px}.mood-controls{padding:10px}}
+@media(prefers-reduced-motion:reduce){.mood-scene{transition:none;transform:none!important}.mood-scene-fade{animation:none}}
+
+/* v2 — Creative Desk: functional art direction, with visible mood and chromatic controls */
+.studio-layout{grid-template-columns:minmax(178px,.72fr) minmax(340px,1.43fr) minmax(290px,1.05fr);gap:15px}
+.assistant-panel{background:#fbf8f3;box-shadow:0 8px 30px #3b1b2610}
+.assistant-panel>.panel-head{background:#251c22;color:#fef8ef;border-bottom:0;padding:18px}
+.assistant-panel>.panel-head h3{font-family:Georgia,serif;font-size:16px;letter-spacing:.3px}
+.assistant-panel>.panel-head small{color:#d4aeb6;font-size:9px;letter-spacing:1px}
+.desk-symbol{color:#d7a684;margin-left:4px}.assistant-panel .assistant-body{padding:16px}
+.desk-heading{margin:4px 0 13px}.desk-heading .micro-eyebrow,.micro-eyebrow{font-size:9px;letter-spacing:1.75px;color:#986d78;font-weight:800}
+.desk-heading h3{font-family:Georgia,'Noto Serif TC',serif;letter-spacing:-.8px;font-size:28px;font-weight:500;margin:4px 0 5px;color:#30232b}
+.desk-heading h3 em{font-style:normal;color:#a97e83;font-size:16px;vertical-align:top}
+.desk-heading p{color:#85777a;font-size:10px;line-height:1.7;margin:0}
+.assistant-panel .mood-controls{margin:0 0 13px;background:#fff;border-color:#e9dcd9;padding:12px}
+.assistant-panel .mood-options{gap:5px}.assistant-panel .mood-choice{padding:7px 8px;font-size:10px}
+.generation-form{border:1px solid #e6d8d4;border-radius:14px;background:#fff;padding:13px;margin-bottom:24px}
+.generation-form>label:first-child{display:flex;justify-content:space-between;gap:5px;align-items:center;margin-bottom:9px}
+.generation-form label strong{font-size:12px}.generation-form label span{font-size:9px;color:#9b8588;letter-spacing:.5px}
+.generation-form textarea{width:100%;border-radius:9px;border:1px solid #e6dad5;background:#fbf9f7;color:#46363b;padding:10px;font-size:11px;line-height:1.65;min-height:86px;resize:vertical}
+.gen-examples{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 12px}.gen-examples button{font-size:9px;border-radius:20px;border:1px solid #e6d7d5;background:#faf5f1;color:#7a5760;padding:5px 8px}
+.gen-select-label{font-size:10px;color:#6d5e61;display:block;margin-bottom:5px}.generation-form select{width:100%;min-width:0;font-size:11px;padding:8px 9px}
+.remote-settings{margin:9px 0;padding:11px;background:#f9f3f1;border-radius:10px}.remote-settings label{display:block;font-size:10px;margin-bottom:6px;font-weight:650}.remote-settings input{width:100%;padding:9px 10px;font-size:10px;border:1px solid #e4d4d1;border-radius:8px}
+.remote-settings small{font-size:9px;line-height:1.6;display:block;color:#876f75;margin-top:6px}
+.gen-action-row{display:flex;gap:7px;margin-top:10px}.gen-action-row .btn{flex:1;padding:10px 8px;font-size:11px}
+.gen-status{font-size:9px;line-height:1.7;color:#817378;margin-top:10px}
+.chromatic-heading{margin-top:0}.current-color-box{border:1px solid #e7d7d4;background:#fff;border-radius:13px;padding:12px;margin:10px 0 16px}
+.colorbox-row{display:flex;justify-content:space-between;align-items:center;gap:8px}.colorbox-row strong,.chromatic-title-row strong{font-size:10px;letter-spacing:1px;color:#4b3a40}.colorbox-row span{font-size:9px;color:#8b767a}
+.current-swatches{display:flex;gap:6px;margin:12px 0}.current-swatch{min-width:0;flex:1}.current-swatch i{height:36px;border-radius:6px;display:block;border:1px solid #0000000d}.current-swatch small{display:block;margin-top:5px;font-size:9px;color:#826f73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.current-color-box p{color:#78696f;font-size:10px;line-height:1.7;margin:4px 0 6px}.text-link{border:0;background:none;padding:3px 0;color:#8a4357;text-decoration:underline;text-underline-offset:3px;font-size:10px}
+.anchor-picker{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}.anchor-picker[hidden]{display:none}.anchor-picker button{border:1px solid #e5d5d3;background:#f9f4f0;border-radius:20px;font-size:9px;padding:6px 8px}
+.chromatic-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.chromatic-title-row small{font-size:9px;color:#867679}
+.palette-list{display:grid;gap:8px}
+.palette-card{border:1px solid #e4d8d1;background:#fff;border-radius:12px;padding:11px;text-align:left;display:block;width:100%;color:#3e2c35;transition:.2s}
+.palette-card:hover{transform:translateY(-1px);border-color:#b98c92;box-shadow:0 5px 14px #41272e0a}.palette-card.active{border-color:#792f47;box-shadow:inset 0 0 0 1px #792f47}
+.palette-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.palette-card-top strong{font-size:11px;font-weight:750}.palette-type{font-size:8px;letter-spacing:.4px;color:#9e7180;background:#f9f0ef;border-radius:6px;padding:4px 5px;white-space:nowrap}
+.palette-card p{font-size:9px;line-height:1.45;color:#8b7a7d;margin:5px 0 9px}.palette-strip{display:flex;gap:3px;height:19px;border-radius:5px;overflow:hidden}.palette-strip i{flex:1;border:1px solid #00000008}
+.palette-detail{margin:10px 0 25px;border-radius:13px;background:#f3ece7;border:1px solid #e6d9d1;padding:13px}
+.palette-detail h4{font-family:Georgia,serif;font-size:18px;font-weight:500;margin:0 0 5px}.palette-detail .palette-intro{font-size:10px;color:#796970;line-height:1.7;margin:0 0 9px}
+.palette-pieces{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}.palette-piece{display:inline-flex;gap:5px;align-items:center;border:1px solid #e4d6ce;border-radius:20px;background:#fff;padding:5px 7px;font-size:9px}.palette-piece i{width:11px;height:11px;display:inline-block;border-radius:50%;border:1px solid #0001}
+.palette-guidance{border-top:1px solid #ddcec8;padding-top:9px;font-size:10px;line-height:1.75;color:#59474e}
+.inventory-result{background:#fff;border-radius:9px;padding:10px;margin-top:10px;display:flex;align-items:center;gap:8px;font-size:10px}
+.inventory-result .result-mark{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;background:#efe6de;font-size:16px}
+.inventory-result .result-copy{flex:1;min-width:0;line-height:1.5}.inventory-result .result-copy strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inventory-result .result-copy small{color:#8f7a7d;display:block}.palette-actions{display:flex;gap:7px;margin-top:9px}.palette-actions .btn{flex:1;padding:8px 7px;font-size:10px}
+.canvas-palette-summary{border:1px solid #e9dbd3;border-radius:11px;background:#fffdf9;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px;padding:11px 13px}
+.canvas-palette-summary .micro-eyebrow{display:block;margin-bottom:4px}.canvas-palette-summary strong{font-size:12px}.canvas-palette-swatch{display:flex;gap:3px;min-width:110px;justify-content:flex-end}.canvas-palette-swatch i{height:32px;width:26px;display:block;border-radius:5px;border:1px solid #0000000c}
+.style-chat-heading{margin-top:2px}.chat-log{max-height:235px}.mood-stage.has-generated .mood-scene{background-size:cover;background-position:center}
+.mood-stage.has-generated .mood-content .mood-kicker{color:#ffe4b8}.mood-stage .generated-ribbon{display:none}
+.mood-stage.has-generated .generated-ribbon{display:block;position:absolute;right:12px;top:12px;z-index:4;background:#ffffffd9;color:#472e37;font-size:9px;padding:7px 9px;border-radius:7px}
+@media(max-width:1250px){.studio-layout{grid-template-columns:minmax(175px,.72fr) minmax(315px,1.35fr)}.assistant-panel{grid-column:1/-1}.assistant-panel .assistant-body{display:block}.palette-list{grid-template-columns:repeat(2,minmax(0,1fr))}.assistant-panel .mood-options{flex-wrap:wrap}}
+@media(max-width:760px){.studio-layout{grid-template-columns:1fr}.assistant-panel{grid-column:auto}.palette-list{grid-template-columns:1fr}.assistant-panel .assistant-body{display:block}.mood-stage,.mood-content{min-height:280px}.gen-action-row{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.palette-card{transition:none}}
+
+
+/* v3 compact sidebar — desktop rail, persistent user preference */
+.app{transition:grid-template-columns .26s ease}
+.topbar-leading{display:flex;align-items:flex-start;gap:14px;min-width:0}
+.topbar-leading>div{min-width:0}
+.sidebar-toggle{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;margin-top:14px;border:1px solid #dfd2cd;background:#fffdf9;border-radius:11px;color:#6e2638;font-size:15px;transition:background .2s,transform .2s}
+.sidebar-toggle:hover{background:#f4e8e5}
+.app.sidebar-collapsed{grid-template-columns:76px minmax(0,1fr)}
+.sidebar-collapsed .sidebar{padding:26px 9px;gap:25px;align-items:center}
+.sidebar-collapsed .brand{padding:0;justify-content:center}
+.sidebar-collapsed .brand-copy,.sidebar-collapsed .nav-label,.sidebar-collapsed .nav-text,.sidebar-collapsed .sidebar-bottom{display:none}
+.sidebar-collapsed .sidebar>div:nth-child(2),.sidebar-collapsed .sidebar .nav{width:100%}
+.sidebar-collapsed .nav-btn{justify-content:center;padding:14px 9px;min-height:47px}
+.sidebar-collapsed .nav-btn .ico{font-size:20px}
+.mood-stage.has-generated .mood-shade{background:linear-gradient(90deg,rgba(10,8,18,.83),rgba(10,8,18,.37) 48%,rgba(10,8,18,.07) 95%),linear-gradient(0deg,rgba(8,8,13,.25),transparent 45%)}
+.scene-understanding{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:9px 0 5px;color:#785f69;font-size:10px;line-height:1.7}
+.scene-tag{display:inline-flex;align-items:center;padding:3px 7px;background:#f1e7e3;border:1px solid #e3d2d0;border-radius:7px;color:#754459;font-size:9px}
+.scene-understanding .scene-notice{color:#8a7679;font-size:10px}
+@media(min-width:761px) and (max-width:1180px){.app.sidebar-collapsed{grid-template-columns:70px minmax(0,1fr)}}
+@media(max-width:760px){.sidebar-toggle{display:none}.app.sidebar-collapsed{display:block}.topbar-leading{gap:0}}
+@media(prefers-reduced-motion:reduce){.app,.sidebar-toggle{transition:none}}
+
+/* v4 — editable wardrobe, data portability, and integrated acceptance criteria */
+.card-actions .btn{padding:7px 5px;font-size:10px}
+.existing-image{margin-top:10px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:9px}
+.existing-image[hidden]{display:none}
+.existing-image img{height:70px;width:70px;object-fit:cover;border-radius:8px}
+.existing-image label{font-size:12px;display:flex;align-items:center;gap:7px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.settings-card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:23px;min-width:0}
+.settings-kicker{letter-spacing:1.9px;font-size:9px;font-weight:800;color:var(--wine2)}
+.settings-card h3{margin:9px 0;font-family:Georgia,'Noto Serif TC',serif;font-size:22px}
+.settings-card p{font-size:12px;color:#75666a;line-height:1.8}
+.settings-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.settings-note{font-size:10px!important}
+.data-summary{border:1px solid var(--line);border-radius:10px;background:#f9f3ef;padding:13px;font-size:12px;color:#6d4c55}
+.spec-table-wrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.spec-table{width:100%;border-collapse:collapse;min-width:560px;text-align:left}
+.spec-table td,.spec-table th{font-size:12px;padding:13px 15px;border-bottom:1px solid #eee5df;line-height:1.5}
+.spec-table tr:last-child td{border-bottom:0}
+.spec-table th{background:#f4ece7;color:#684651;font-size:11px}
+.spec-table .passed{color:#28664e;font-weight:750}.spec-table .pending{color:#946331;font-weight:750}
+@media(max-width:760px){.settings-grid{grid-template-columns:1fr}.mobile-nav{grid-template-columns:repeat(6,1fr)}.mobile-nav button{font-size:9px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="appSidebar">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <div class="brand-copy"><div class="brand-name">Wardrobe OS</div><div class="brand-sub">YOUR PERSONAL STYLE SPACE</div></div>
+    </div>
+    <div>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav" aria-label="主要導覽">
+        <button class="nav-btn active" data-view="home"><span class="ico" aria-hidden="true">⌂</span><span class="nav-text">首頁</span></button>
+        <button class="nav-btn" data-view="closet"><span class="ico" aria-hidden="true">♧</span><span class="nav-text">我的衣櫥</span></button>
+        <button class="nav-btn" data-view="discovery"><span class="ico" aria-hidden="true">✧</span><span class="nav-text">風格探索</span></button>
+        <button class="nav-btn" data-view="studio"><span class="ico" aria-hidden="true">▦</span><span class="nav-text">穿搭工作室</span></button>
+        <button class="nav-btn" data-view="saved"><span class="ico" aria-hidden="true">♡</span><span class="nav-text">我的收藏</span></button>
+        <button class="nav-btn" data-view="settings"><span class="ico" aria-hidden="true">⚙</span><span class="nav-text">資料與驗收</span></button>
+      </nav>
+    </div>
+    <div class="sidebar-bottom">WARDROBE OS · VERSION 4.1<br>MOOD LAB × CHROMATIC<br>讓靈感自由流動，讓風格持續演化。</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-leading">
+        <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-controls="appSidebar" aria-expanded="true" aria-label="收合左側導覽列" title="收合左側導覽列">❮</button>
+        <div>
+        <div class="eyebrow" id="pageEyebrow">YOUR STYLE, YOUR RULES</div>
+        <h1 id="pageTitle">你的風格空間</h1>
+        <div class="subtitle" id="pageSubtitle">整理衣櫥、探索靈感，打造真正屬於你的搭配。</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn optional" id="topExploreBtn">✧ 探索風格</button>
+        <button class="btn primary" id="topAddBtn">＋ 新增衣物</button>
+      </div>
+    </header>
+
+    <section class="view active" id="view-home">
+      <div class="stats">
+        <div class="stat"><div><div class="stat-top">衣櫥單品 <span class="stat-icon">♧</span></div><div class="stat-num" id="statClothes">0</div><div class="stat-note">你的個人數位衣櫥</div></div></div>
+        <div class="stat"><div><div class="stat-top">收藏穿搭 <span class="stat-icon">♡</span></div><div class="stat-num" id="statOutfits">0</div><div class="stat-note">值得再次穿上的靈感</div></div></div>
+        <div class="stat"><div><div class="stat-top">風格標籤 <span class="stat-icon">✧</span></div><div class="stat-num" id="statStyles">0</div><div class="stat-note">從衣物中累積你的風格</div></div></div>
+      </div>
+      <div class="section-head"><div><h2>從靈感開始</h2><p>不必先想好完整搭配，從一個小念頭開始就好。</p></div></div>
+      <div class="quick-grid">
+        <button class="quick-card" data-go="studio"><div class="quick-icon">▦</div><div><strong>進入穿搭工作室</strong><span>自由替換衣物、調整細節，讓一套搭配慢慢成形。</span></div></button>
+        <button class="quick-card" data-go="discovery"><div class="quick-icon">✧</div><div><strong>探索一種新風格</strong><span>選擇色彩或風格方向，從現有衣櫥尋找新可能。</span></div></button>
+      </div>
+      <div class="section-head"><div><h2>最近加入的衣物</h2><p>你的衣櫥正在慢慢長出自己的樣子。</p></div><button class="btn small" data-go="closet">查看全部 →</button></div>
+      <div class="clothing-grid" id="homeRecent"></div>
+      <div class="section-head"><div><h2>最近收藏的穿搭</h2><p>把喜歡的組合留下來，下一次可以接著改。</p></div><button class="btn small" data-go="saved">查看收藏 →</button></div>
+      <div class="outfit-grid" id="homeSaved"></div>
+    </section>
+
+    <section class="view" id="view-closet">
+      <div class="section-head"><div><h2>所有單品</h2><p>搜尋、分類與管理你的衣物。</p></div><button class="btn primary" id="closetAddBtn">＋ 新增衣物</button></div>
+      <div class="toolbar">
+        <div class="search"><input id="closetSearch" type="search" placeholder="搜尋名稱、顏色或風格…" aria-label="搜尋衣物"></div>
+        <select id="categoryFilter" aria-label="類別篩選"><option value="all">所有類別</option><option value="outerwear">外套</option><option value="top">上衣</option><option value="bottoms">下身</option><option value="shoes">鞋子</option><option value="accessories">配件</option></select>
+        <select id="colorFilter" aria-label="顏色篩選"><option value="all">所有顏色</option><option>黑色</option><option>白色</option><option>灰色</option><option>酒紅色</option><option>棕色</option><option>卡其色</option><option>摩卡色</option><option>巧克力色</option><option>青綠色</option><option>奶油白</option><option>炭灰色</option><option>藍色</option><option>米色</option><option>綠色</option></select>
+      </div>
+      <div class="clothing-grid" id="closetGrid"></div>
+    </section>
+
+    <section class="view" id="view-discovery">
+      <div class="section-head"><div><h2>今天想探索什麼？</h2><p>選擇一個方向，讓衣櫥裡的單品產生新的連結。</p></div></div>
+      <div class="quick-grid" id="styleChoices">
+        <button class="quick-card style-choice" data-style="韓系復古"><div class="quick-icon">◈</div><div><strong>韓系復古</strong><span>復古輪廓、中性色調與細節層次。</span></div></button>
+        <button class="quick-card style-choice" data-style="極簡俐落"><div class="quick-icon">◻</div><div><strong>極簡俐落</strong><span>乾淨線條、低彩度與簡潔比例。</span></div></button>
+        <button class="quick-card style-choice" data-style="街頭休閒"><div class="quick-icon">✦</div><div><strong>街頭休閒</strong><span>寬鬆輪廓、層次與輕鬆感。</span></div></button>
+        <button class="quick-card style-choice" data-style="成熟正式"><div class="quick-icon">◇</div><div><strong>成熟正式</strong><span>俐落剪裁、沉穩色彩與精緻配件。</span></div></button>
+      </div>
+      <div class="section-head"><div><h2>從一件衣服開始</h2><p>選擇你今天最想穿的單品，接著到工作室自由搭配。</p></div></div>
+      <div class="clothing-grid" id="discoveryGrid"></div>
+      <div class="helper-note">風格建議會依據你已登錄的衣物名稱、類別、顏色與標籤產生。若衣櫥資料還不多，可以先新增幾件常穿的單品。</div>
+    </section>
+
+    <section class="view" id="view-studio">
+      <div class="section-head"><div><h2>每套造型，都有自己的色彩世界</h2><p>自由替換單品，右側可生成背景、探索 Chromatic 配色，再用文字進行微調。</p></div><div class="top-actions"><button class="btn small" id="undoBtn" title="復原最近一次編輯">↶ 復原</button><button class="btn small" id="redoBtn" title="重做">↷ 重做</button></div></div>
+      <div class="studio-layout">
+        <section class="panel closet-panel">
+          <div class="panel-head"><h3>我的衣櫥</h3><small id="miniCount">0 件</small></div>
+          <div class="panel-body">
+            <input class="closet-mini-search" id="miniSearch" type="search" placeholder="搜尋衣物…" aria-label="搜尋工作室衣物">
+            <div class="mini-filters" id="miniFilters">
+              <button class="filter-chip active" data-mini-cat="all">全部</button>
+              <button class="filter-chip" data-mini-cat="outerwear">外套</button>
+              <button class="filter-chip" data-mini-cat="top">上衣</button>
+              <button class="filter-chip" data-mini-cat="bottoms">下身</button>
+              <button class="filter-chip" data-mini-cat="shoes">鞋子</button>
+              <button class="filter-chip" data-mini-cat="accessories">配件</button>
+            </div>
+            <div class="mini-list" id="miniList"></div>
+          </div>
+        </section>
+
+        <section class="panel canvas-panel">
+          <div class="panel-head"><h3>目前的穿搭</h3><small id="canvasStatus">編輯中</small></div>
+          <div class="panel-body">
+            <div class="mood-stage" id="moodStage" data-mood="burgundy" aria-label="穿搭視覺氛圍預覽"><div class="mood-scene" id="moodScene"></div><div class="mood-shade"></div><span class="generated-ribbon" id="generatedRibbon">✧ 專屬生成場景</span><div class="mood-content"><div><div class="mood-kicker">WARDROBE OS / MOOD EDITORIAL</div><h2 class="mood-title" id="moodTitle">BURGUNDY<br>NOIR</h2><div class="mood-desc" id="moodDescription">一套穿搭，一個專屬的視覺世界。</div></div><div class="mood-foot"><span class="mood-pill" id="moodMode">✧ 系統推薦</span><div class="mood-swatches" id="moodSwatches" aria-label="主題色票"></div></div></div></div>
+            <div class="canvas-palette-summary"><div><span class="micro-eyebrow">COLOR DIRECTION</span><strong id="canvasPaletteName">目前穿搭的配色</strong></div><div class="canvas-palette-swatch" id="canvasPaletteSwatches"></div></div>
+            <div class="canvas-top"><input class="canvas-title" id="outfitName" value="新的穿搭" aria-label="穿搭名稱" maxlength="60"><span class="canvas-note">DRAFT</span></div>
+            <div class="outfit-slots" id="outfitSlots"></div>
+            <div class="canvas-footer"><small id="canvasSummary">選擇左側衣物來開始搭配。</small><div class="top-actions"><button class="btn small" id="clearOutfitBtn">清空畫布</button><button class="btn primary small" id="saveOutfitBtn">♡ 儲存穿搭</button></div></div>
+            <div class="helper-note">小提示：使用「更換」選擇新單品時，其他位置會保持不變。你也可以在右側用文字描述想法。</div>
+          </div>
+        </section>
+
+        <section class="panel assistant-panel">
+          <div class="panel-head"><h3>CREATIVE DESK <span class="desk-symbol">✳</span></h3><small>MOOD LAB × CHROMATIC</small></div>
+          <div class="assistant-body">
+            <div class="desk-heading"><span class="micro-eyebrow">01 / VISUAL ATMOSPHERE</span><h3>Mood Lab <em>↗</em></h3><p>從你的文字辨識主題、場景與光線，再用多層構圖打造穿搭世界。</p></div>
+            <div class="mood-controls"><div class="mood-controls-top"><strong>預設視覺風格</strong><small>可自行覆寫</small></div><div class="mood-options" id="moodOptions" role="group" aria-label="選擇穿搭視覺風格"></div><div class="mood-actions"><button class="btn small" id="moodAutoBtn" type="button">✧ 自動推薦</button><button class="btn small" id="moodNextBtn" type="button">↻ 換一款</button></div><div class="mood-reason" id="moodReason"></div></div>
+            <div class="generation-form">
+              <label for="backgroundPrompt"><strong>專屬背景生成</strong><span>DESCRIBE YOUR WORLD</span></label>
+              <textarea id="backgroundPrompt" maxlength="400" rows="3" placeholder="例如：F1 賽車在下雨的賽道奔馳，鮮紅車身、夜間照明與高速動感；或：海邊日出、柔霧與暖金色…"></textarea>
+              <div class="scene-understanding" id="sceneUnderstanding" role="status" aria-live="polite">輸入描述後，這裡會顯示本機模式理解到的場景元素。</div>
+              <div class="gen-examples" aria-label="背景提示範例"><button type="button" data-gen-example="酒紅色夜景、香港電影、復古底片、柔和路燈">香港電影</button><button type="button" data-gen-example="cyberpunk 未來雨夜都市、霓虹粉與青藍、科技街景">賽博雨夜</button><button type="button" data-gen-example="高速賽車在雨夜賽道衝刺，觀眾席燈光、鮮紅車身、充滿速度感">速度與賽道</button><button type="button" data-gen-example="運動場，跑步選手在夕陽下衝刺，綠色草坪、藍色跑道">運動現場</button><button type="button" data-gen-example="極簡建築、柔和灰白、雕塑般的光影、時裝攝影">極簡建築</button></div>
+              <label class="gen-select-label" for="bgEngine">生成來源</label>
+              <select id="bgEngine" aria-label="背景生成來源"><option value="local">構圖生成引擎 · 免登入、免 API</option><option value="remote">真正 AI 生圖 · 自備安全後端</option></select>
+              <div id="remoteSettings" class="remote-settings" hidden><label for="bgEndpoint">AI 後端 HTTPS API 端點</label><input type="url" id="bgEndpoint" placeholder="https://your-server.example/generate" autocomplete="off"><small>後端接收 POST JSON {prompt, outfit, palette}，回傳 imageUrl / dataUrl 或 image/*。請勿把 API 金鑰放入 HTML 或網址；伺服器需允許 CORS。</small></div>
+              <div class="gen-action-row"><button class="btn primary" type="button" id="generateBgBtn">✧ 生成背景</button><button class="btn" type="button" id="removeBgBtn">恢復主題</button></div>
+              <div class="gen-status" id="bgStatus" role="status" aria-live="polite">本機引擎會解析場景、主體、光線與顏色，再程序化繪製；不是照片級 AI 生圖，完全開放的概念需搭配 AI 後端。</div>
+            </div>
+            <div class="desk-heading chromatic-heading"><span class="micro-eyebrow">02 / COLOR INTELLIGENCE</span><h3>Chromatic <em>✧</em></h3><p>從現在的穿搭延伸新的配色提案，探索衣櫥裡能實際搭配的可能。</p></div>
+            <div class="current-color-box"><div class="colorbox-row"><strong>CURRENT PALETTE</strong><span id="colorAnchorLabel">自動分析</span></div><div class="current-swatches" id="currentSwatches"></div><p id="colorAnalysis">分析目前穿搭的主色與中性色。</p><button class="text-link" type="button" id="changeAnchorBtn">指定其他主色 ↗</button><div id="anchorPicker" class="anchor-picker" hidden></div></div>
+            <div class="chromatic-title-row"><strong>COLOR STORIES</strong><small id="paletteCount">4 組推薦</small></div>
+            <div class="palette-list" id="paletteList" role="group" aria-label="推薦穿搭配色"></div>
+            <div id="paletteDetail" class="palette-detail" aria-live="polite"></div>
+            <div class="desk-heading style-chat-heading"><span class="micro-eyebrow">03 / YOUR STYLE DIALOGUE</span><h3>Style Assistant <em>↗</em></h3><p>用文字微調穿搭、切換色卡，或描述你想要的背景。</p></div>
+            <p class="assistant-intro">這是本機指令助理，可以協助換單品、選色卡與控制背景；開放式對話需另接語言模型。</p>
+            <div class="chat-log" id="chatLog" aria-live="polite">
+              <div class="bubble assistant">嗨！你可以說「保留外套，換一條深灰色褲子」，或「讓整體更有韓系復古感」。我們可以一步步調整，不需要一次決定。</div>
+            </div>
+            <div class="quick-prompts"><button class="prompt-chip" data-prompt="背景改成賽博龐克霓虹風格">霓虹背景</button><button class="prompt-chip" data-prompt="背景改成酒紅色夜色">酒紅背景</button>
+              <button class="prompt-chip" data-prompt="保留外套，讓整體更有復古感">更有復古感</button>
+              <button class="prompt-chip" data-prompt="把褲子換成深色一點的">換深色褲子</button>
+              <button class="prompt-chip" data-prompt="讓整體更休閒">更休閒</button><button class="prompt-chip" data-prompt="想看酒紅＋卡其的版本">酒紅 × 卡其</button><button class="prompt-chip" data-prompt="想看酒紅＋青綠的配色">酒紅 × 青綠</button><button class="prompt-chip" data-prompt="生成一張香港電影感的酒紅色雨夜背景">生成夜景背景</button>
+            </div>
+            <div class="chat-input-wrap">
+              <textarea class="chat-input" id="chatInput" placeholder="描述你的想法，例如：保留外套，把褲子換成深灰色的…" aria-label="輸入穿搭需求"></textarea>
+              <div class="chat-bottom"><span class="chat-hint">建議會先預覽，不會直接覆蓋穿搭。</span><button class="btn primary small" id="sendChatBtn">送出 ↗</button></div>
+            </div>
+            <div id="proposalHost"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="view-saved">
+      <div class="section-head"><div><h2>你的穿搭收藏</h2><p>保存靈感，也可以隨時複製一套繼續修改。</p></div><button class="btn primary" id="newOutfitBtn">＋ 新穿搭</button></div>
+      <div class="outfit-grid" id="savedGrid"></div>
+    </section>
+
+    <section class="view" id="view-settings">
+      <div class="section-head"><div><h2>資料管理與功能驗收</h2><p>資料只存放在目前瀏覽器；可以將衣櫥、收藏穿搭及背景作品匯出成 JSON 備份。</p></div></div>
+      <div class="settings-grid">
+        <section class="settings-card"><div class="settings-kicker">DATA PORTABILITY</div><h3>備份與跨裝置移轉</h3>
+          <p>匯出後可在另一台裝置開啟此網頁並匯入檔案；這是<strong>手動資料移轉</strong>，不是即時雲端同步。</p>
+          <div class="data-summary" id="dataSummary">正在讀取資料…</div>
+          <div class="settings-actions"><button class="btn primary" type="button" id="exportDataBtn">↓ 匯出完整備份</button><button class="btn" type="button" id="importDataBtn">↑ 匯入備份</button></div>
+          <input id="importDataFile" type="file" accept=".json,application/json" hidden>
+          <p class="settings-note">匯入會在確認後取代目前瀏覽器資料。備份可能包含你上傳的衣物照片，請自行妥善保管。</p>
+        </section>
+        <section class="settings-card"><div class="settings-kicker">VERSION 4.1 / SCOPE</div><h3>目前的功能邊界</h3>
+          <p>這是一份可離線開啟的前端作品，已實作本機衣櫥、穿搭、Chromatic 配色、程序化背景及本機規則指令。</p>
+          <p><strong>尚未提供：</strong>帳號登入、自動跨裝置雲端同步、無限制自然語言 AI 與真正 AI 生圖服務。真正生圖需自行提供可使用的 HTTPS 後端。</p>
+          <button class="btn small danger" type="button" id="resetAllDataBtn">重設本機示範資料</button>
+        </section>
+      </div>
+      <div class="section-head"><div><h2>功能規格與驗收對照</h2><p>此表是 v4 單檔原型的實際驗收範圍，不將尚未接通的雲端功能標成已完成。</p></div></div>
+      <div class="spec-table-wrap"><table class="spec-table"><thead><tr><th>功能與預期行為</th><th>對應頁面</th><th>狀態</th></tr></thead><tbody>
+        <tr><td>新增、編輯、刪除衣物（含名稱、類別、顏色、標籤、備註和圖片）</td><td>我的衣櫥</td><td class="passed">已實作</td></tr>
+        <tr><td>依名稱／標籤搜尋，依類別及顏色篩選</td><td>我的衣櫥</td><td class="passed">已實作</td></tr>
+        <tr><td>加入、更換、鎖定、移除衣物；避免跨類別錯放</td><td>穿搭工作室</td><td class="passed">已實作</td></tr>
+        <tr><td>復原／重做；建立、儲存、修改、複製與刪除收藏穿搭</td><td>工作室／收藏</td><td class="passed">已實作</td></tr>
+        <tr><td>依穿搭風格切換背景；可手動覆寫；依描述生成不同場景</td><td>Mood Lab</td><td class="passed">本機生成</td></tr>
+        <tr><td>讀取目前顏色、推薦多組色卡並預覽符合顏色的衣櫥單品</td><td>Chromatic</td><td class="passed">已實作</td></tr>
+        <tr><td>以指定文字指令切換配色／背景／提出替換預覽</td><td>Style Assistant</td><td class="passed">規則式解析</td></tr>
+        <tr><td>儀表板、風格探索、響應式手機版、導覽列收合</td><td>全站</td><td class="passed">已實作</td></tr>
+        <tr><td>瀏覽器保存，JSON 匯出／匯入資料供手動移轉</td><td>資料與驗收</td><td class="passed">已實作</td></tr>
+        <tr><td>帳號登入、雲端儲存、自動跨裝置同步</td><td>需外部後端</td><td class="pending">待接入</td></tr>
+        <tr><td>真正 AI 生圖及任意語句推理</td><td>需生圖／LLM 後端</td><td class="pending">待接入</td></tr>
+      </tbody></table></div>
+      <div class="helper-note">規格完整敘述及逐項測試紀錄亦附在同次交付的《規格與自檢報告》中。</div>
+    </section>
+  </main>
+</div>
+
+<nav class="mobile-nav" aria-label="手機導覽">
+  <button class="active" data-view="home"><span>⌂</span><span>首頁</span></button>
+  <button data-view="closet"><span>♧</span><span>衣櫥</span></button>
+  <button data-view="discovery"><span>✧</span><span>探索</span></button>
+  <button data-view="studio"><span>▦</span><span>工作室</span></button>
+  <button data-view="saved"><span>♡</span><span>收藏</span></button>
+  <button data-view="settings"><span>⚙</span><span>資料</span></button>
+</nav>
+
+<div class="modal-backdrop" id="clothingModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-head"><h2 id="modalTitle">新增衣物</h2><button class="icon-btn" id="closeModalBtn" aria-label="關閉">×</button></div>
+    <div class="modal-content">
+      <form id="clothingForm">
+        <div class="form-grid">
+          <div class="form-field"><label for="itemName">衣物名稱 *</label><input id="itemName" required maxlength="80" placeholder="例如：酒紅色皮革外套"></div>
+          <div class="form-field"><label for="itemCategory">類別 *</label><select id="itemCategory" required><option value="outerwear">外套</option><option value="top">上衣</option><option value="bottoms">下身</option><option value="shoes">鞋子</option><option value="accessories">配件</option></select></div>
+          <div class="form-field"><label for="itemColor">主要顏色</label><select id="itemColor"><option>黑色</option><option>白色</option><option>灰色</option><option>酒紅色</option><option>棕色</option><option>卡其色</option><option>摩卡色</option><option>巧克力色</option><option>青綠色</option><option>奶油白</option><option>炭灰色</option><option>藍色</option><option>米色</option><option>綠色</option><option>其他</option></select></div>
+          <div class="form-field"><label for="itemStyle">風格標籤</label><input id="itemStyle" placeholder="例如：復古、極簡、街頭"></div>
+          <div class="form-field full"><label for="itemImage">圖片（選填）</label><input id="itemImage" type="file" accept="image/*"><small style="color:var(--muted);font-size:10px">新增圖片會取代舊圖片；未選擇則保留現有圖片。圖片只存在此瀏覽器，建議使用較小檔案。</small>
+            <div id="existingImageControls" class="existing-image" hidden><img id="existingImagePreview" alt="目前衣物圖片預覽"><label><input type="checkbox" id="removeItemImage"> 移除現有圖片</label></div></div>
+          <div class="form-field full"><label for="itemNotes">備註（選填）</label><textarea id="itemNotes" placeholder="材質、版型、適合場合…"></textarea></div>
+        </div>
+        <div class="form-actions"><button type="button" class="btn" id="cancelModalBtn">取消</button><button type="submit" class="btn primary">儲存衣物</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const STORE_KEY = "wardrobeOS_v12_singlefile";
+  const CAT = {outerwear:"外套",top:"上衣",bottoms:"下身",shoes:"鞋子",accessories:"配件"};
+  const EMOJI = {outerwear:"🧥",top:"👕",bottoms:"👖",shoes:"👞",accessories:"👜"};
+  const COLOR_BG = {"黑色":"linear-gradient(145deg,#e5ded7,#c9c0bb)","白色":"linear-gradient(145deg,#fffdf9,#e6e0d8)","灰色":"linear-gradient(145deg,#eee9e3,#cbc6c4)","酒紅色":"linear-gradient(145deg,#ead5d6,#c6a1a5)","棕色":"linear-gradient(145deg,#eee0d0,#c6a98e)","藍色":"linear-gradient(145deg,#dbe5e9,#aabec9)","米色":"linear-gradient(145deg,#f8f0e4,#dfcfba)","綠色":"linear-gradient(145deg,#e0e8dc,#b5c6b0)","其他":"linear-gradient(145deg,#eee5dc,#d8c9bd)","卡其色":"linear-gradient(145deg,#ece3cb,#cbb58b)","摩卡色":"linear-gradient(145deg,#e5d7ca,#ab8c7b)","巧克力色":"linear-gradient(145deg,#b79b8b,#715041)","青綠色":"linear-gradient(145deg,#c6e0d7,#57928c)","奶油白":"linear-gradient(145deg,#fffaf0,#e7dec9)","炭灰色":"linear-gradient(145deg,#dedbd8,#969393)"};
+  const seed = [
+    {id:"seed-1",name:"酒紅色皮革外套",category:"outerwear",color:"酒紅色",styleTags:["復古","韓系"],notes:"穿搭主角",emoji:"🧥"},
+    {id:"seed-2",name:"白色襯衫",category:"top",color:"白色",styleTags:["極簡","正式"],notes:"百搭單品",emoji:"👔"},
+    {id:"seed-3",name:"黑色喇叭褲",category:"bottoms",color:"黑色",styleTags:["復古","正式"],notes:"修長的喇叭剪裁",emoji:"👖"},
+    {id:"seed-4",name:"黑色直筒牛仔褲",category:"bottoms",color:"黑色",styleTags:["街頭","休閒"],notes:"日常搭配",emoji:"👖"},
+    {id:"seed-5",name:"黑色樂福鞋",category:"shoes",color:"黑色",styleTags:["極簡","正式"],notes:"",emoji:"👞"},
+    {id:"seed-6",name:"棕色皮革肩背包",category:"accessories",color:"棕色",styleTags:["復古"],notes:"",emoji:"👜"},
+    {id:"seed-7",name:"米色針織上衣",category:"top",color:"米色",styleTags:["極簡","休閒"],notes:"",emoji:"🧶"},
+    {id:"seed-8",name:"藍色寬版牛仔外套",category:"outerwear",color:"藍色",styleTags:["街頭","休閒"],notes:"",emoji:"🧥"}
+  ];
+  let state = loadState();
+  let currentView = "home";
+  let replaceSlot = null;
+  let editingClothingId = null;
+  let miniCat = "all";
+  let proposal = null;
+  let history = [];
+  let future = [];
+  let toastTimer = null;
+  let colorAnchorManual = state.draft?.colorAnchorManual || null;
+  let paletteFocus = null;
+  let sceneGenerationBusy = false;
+  const SIDEBAR_PREF_KEY='wardrobeOS_ui_sidebar_collapsed_v3';
+  let sidebarCollapsed=false;
+  try{sidebarCollapsed=localStorage.getItem(SIDEBAR_PREF_KEY)==='1';}catch(e){}
+  function setSidebarCollapsed(collapsed){
+    sidebarCollapsed=!!collapsed;
+    document.querySelector('.app').classList.toggle('sidebar-collapsed',sidebarCollapsed);
+    const toggle=document.getElementById('sidebarToggle');
+    toggle.textContent=sidebarCollapsed?'❯':'❮';
+    toggle.setAttribute('aria-expanded',String(!sidebarCollapsed));
+    toggle.setAttribute('aria-label',sidebarCollapsed?'展開左側導覽列':'收合左側導覽列');
+    toggle.title=sidebarCollapsed?'展開左側導覽列':'收合左側導覽列';
+    document.querySelectorAll('.sidebar .nav-btn').forEach(btn=>{
+      const name=btn.querySelector('.nav-text')?.textContent||'';
+      btn.title=sidebarCollapsed?name:'';
+      btn.setAttribute('aria-label',name);
+    });
+    try{localStorage.setItem(SIDEBAR_PREF_KEY,sidebarCollapsed?'1':'0');}catch(e){}
+  }
+
+
+
+  const MOODS={
+    burgundy:{label:"酒紅夜色",title:"BURGUNDY<br>NOIR",desc:"絲絨、深紅與微光。讓濃郁的酒紅成為整套穿搭的情緒。",colors:["#6b1835","#ba637c","#251321"],bg:`radial-gradient(ellipse at 76% 24%,#d97b7d77,transparent 32%),radial-gradient(ellipse at 90% 90%,#861e4c,transparent 52%),repeating-linear-gradient(115deg,#ffffff05 0 2px,transparent 2px 16px),linear-gradient(128deg,#130c19 0%,#4d112e 45%,#7c3043 72%,#21111d 100%)`},
+    cyberpunk:{label:"賽博霓虹",title:"NEON<br>AFTER DARK",desc:"電光藍、霓虹粉與數位夜城。讓造型走進未來街頭。",colors:["#fa32b5","#00dcff","#171433"],bg:`repeating-linear-gradient(90deg,transparent 0 45px,#04d7f322 46px 47px,transparent 48px 83px),linear-gradient(180deg,transparent 53%,#00000099 100%),radial-gradient(ellipse at 80% 27%,#ff2fa9aa,transparent 32%),radial-gradient(ellipse at 20% 85%,#00ddff8a,transparent 40%),linear-gradient(125deg,#080c26,#242052 55%,#3c0e43)`},
+    minimal:{label:"建築極簡",title:"CONCRETE<br>STUDIES",desc:"石灰、陰影與結構。將視線留給服裝本身的剪裁。",colors:["#bcb9b2","#eee9df","#494a4b"],bg:`linear-gradient(110deg,transparent 44%,#ffffff44 45% 46%,transparent 47%),linear-gradient(155deg,transparent 55%,#292c2f55 55.5% 70%,transparent 70.5%),repeating-linear-gradient(0deg,#ffffff0a 0 1px,transparent 1px 6px),linear-gradient(130deg,#36383a,#a5a4a0 56%,#62625f)`},
+    vintage:{label:"復古膠片",title:"GOLDEN<br>HOUR",desc:"溫暖的底片顆粒、皮革與歲月感，呈現復古時裝故事。",colors:["#936042","#d8ad76","#403029"],bg:`repeating-radial-gradient(circle at 70% 25%,#ffffff0b 0 1px,transparent 1px 5px),radial-gradient(ellipse at 80% 20%,#f4be74b3,transparent 48%),linear-gradient(130deg,#32231e,#86543a 58%,#392c2b)`},
+    street:{label:"都會街頭",title:"CITY<br>UNIFORM",desc:"都市夜色、柏油路與俐落對比，打造當代街頭視角。",colors:["#1b2430","#708494","#c5d0d4"],bg:`repeating-linear-gradient(92deg,transparent 0 75px,#ffffff12 76px 78px,transparent 79px 115px),radial-gradient(ellipse at 85% 20%,#7fa8b48c,transparent 45%),linear-gradient(130deg,#121b24,#344b5a 60%,#131923)`}
+  };
+  const MOOD_KEYS=Object.keys(MOODS);
+  function suggestedMood(){
+    const selected=Object.values(state.draft.items||{}).map(byId).filter(Boolean);
+    const corpus=[state.draft.name,...selected.flatMap(i=>[i.name,i.color,...(i.styleTags||[])])].join(' ').toLowerCase();
+    if(/賽博|cyber|霓虹|未來|科技|neon/i.test(corpus))return ['cyberpunk','名稱或標籤包含未來、霓虹或賽博元素'];
+    if(/復古|vintage|retro|皮革|棕色/.test(corpus)&&!/酒紅/.test(corpus))return ['vintage','衣物的材質、色彩或標籤帶有復古感'];
+    if(/酒紅|burgundy|wine|紅色/.test(corpus))return ['burgundy','穿搭中包含酒紅色或相關色彩線索'];
+    if(/街頭|street|牛仔|運動/.test(corpus))return ['street','單品帶有街頭或休閒的造型線索'];
+    if(/極簡|minimal|灰色|白色|米色|正式/.test(corpus))return ['minimal','衣物以中性色或簡潔風格為主'];
+    return ['minimal','目前線索較少，先推薦適合多數造型的中性背景'];
+  }
+  function moodKey(){return MOODS[state.draft.moodOverride]?state.draft.moodOverride:suggestedMood()[0];}
+  function renderMood(){
+    const key=moodKey(),m=MOODS[key],auto=!state.draft.moodOverride;
+    const stage=document.getElementById('moodStage');stage.dataset.mood=key;
+    const scene=document.getElementById('moodScene');const custom=state.draft.customBg;
+    scene.style.backgroundImage=custom?`url("${custom.src}")`:m.bg;
+    stage.classList.toggle('has-generated',!!custom);
+    document.getElementById('generatedRibbon').textContent=custom?(custom.source==='remote'?'✧ AI 影像背景':'✧ 本機生成背景'):'';
+    scene.classList.remove('mood-scene-fade');void scene.offsetWidth;scene.classList.add('mood-scene-fade');
+    document.getElementById('moodTitle').innerHTML=custom?esc(custom.label||'YOUR SCENE'):m.title;
+    document.getElementById('moodDescription').textContent=custom?`你的背景描述：${custom.prompt}`:m.desc;
+    document.getElementById('moodMode').textContent=custom?(custom.source==='remote'?'✧ AI 後端生成':'✎ 本機視覺生成'):(auto?'✧ 系統推薦':'✎ 手動指定');
+    document.getElementById('moodSwatches').innerHTML=m.colors.map(c=>`<i style="background:${c}"></i>`).join('');
+    document.getElementById('moodOptions').innerHTML=MOOD_KEYS.map(k=>`<button type="button" class="mood-choice ${k===key?'active':''}" data-mood-choice="${k}" aria-pressed="${k===key}">${MOODS[k].label}</button>`).join('');
+    document.getElementById('moodReason').textContent=auto?`推薦原因：${suggestedMood()[1]}。此推薦由本機規則產生，非雲端 AI。`:'已採用你指定的風格；更換衣物不會自動覆寫。點選「重新自動推薦」可恢復自動模式。';
+  }
+  function setMood(key){if(!MOODS[key])return;snapshot();state.draft.moodOverride=key;state.draft.customBg=null;state.draft.dirty=true;persist();renderStudio();toast(`背景已切換為「${MOODS[key].label}」。`);}
+  function moodFromCommand(t){
+    if(!/(背景|氛圍|場景|視覺|主題|風格|mood|賽博|cyberpunk|霓虹)/i.test(t))return null;
+    if(/自動推薦|自動判斷|系統推薦/.test(t))return 'auto';
+    if(/賽博|cyber|霓虹|未來|neon/i.test(t))return 'cyberpunk';
+    if(/酒紅|burgundy|紅色夜色/i.test(t))return 'burgundy';
+    if(/極簡|建築|混凝土|minimal|灰階/i.test(t))return 'minimal';
+    if(/復古|底片|懷舊|vintage|retro/i.test(t))return 'vintage';
+    if(/街頭|都會|street|城市/i.test(t))return 'street';
+    return null;
+  }
+
+
+  // CHROMATIC — these are transparent, curated suggestions, not an image-recognition or remote AI model.
+  const SWATCH={
+    burgundy:{label:'酒紅',hex:'#72283e',keys:['酒紅','burgundy','wine','葡萄酒紅','深紅']},
+    black:{label:'黑色',hex:'#26242b',keys:['黑色','黑']},
+    white:{label:'白色',hex:'#fbf8f1',keys:['白色','純白']},
+    charcoal:{label:'炭灰',hex:'#45494e',keys:['炭灰','深灰','石墨','charcoal']},
+    ivory:{label:'象牙白',hex:'#f2e9d8',keys:['象牙','米白','ivory']},
+    cream:{label:'奶油白',hex:'#f6e7cd',keys:['奶油白','奶油','cream']},
+    khaki:{label:'卡其',hex:'#b6a27e',keys:['卡其','khaki']},
+    mocha:{label:'摩卡',hex:'#967766',keys:['摩卡','mocha']},
+    chocolate:{label:'巧克力',hex:'#5b382e',keys:['巧克力','chocolate','深咖啡']},
+    brown:{label:'棕色',hex:'#946344',keys:['棕色','咖啡色','棕']},
+    taupe:{label:'灰褐',hex:'#a79c91',keys:['灰褐','taupe']},
+    teal:{label:'青綠',hex:'#166d73',keys:['青綠','孔雀藍','teal','藍綠']},
+    olive:{label:'橄欖綠',hex:'#6c7152',keys:['橄欖','olive']},
+    green:{label:'綠色',hex:'#58825f',keys:['綠色','草綠']},
+    blue:{label:'藍色',hex:'#5a7697',keys:['藍色','丹寧','深藍','海軍藍','blue']},
+    beige:{label:'米色',hex:'#e0cfb7',keys:['米色','beige']},
+    silver:{label:'銀色',hex:'#b3bec5',keys:['銀色','silver']},
+    pink:{label:'玫瑰粉',hex:'#ca8ea2',keys:['粉紅','玫瑰粉','粉色','pink']},
+    purple:{label:'紫色',hex:'#806284',keys:['紫色','purple']}
+  };
+  const PALETTE_STORIES={
+    burgundy:[
+      {id:'wine-khaki',name:'Burgundy × Khaki',type:'ELEVATED NEUTRAL',note:'文藝復古・有層次的日常',colors:['burgundy','khaki','ivory','chocolate'],target:'bottoms',targetColor:'khaki',suggestion:'保留酒紅外套與白色襯衫，試著用卡其色褲裝替代黑褲；以深棕配件收束整體。'},
+      {id:'wine-mocha',name:'Wine × Mocha',type:'HARMONIOUS',note:'溫暖、柔和、時裝感',colors:['burgundy','mocha','cream','black'],target:'bottoms',targetColor:'mocha',suggestion:'保持酒紅主角色，將下身轉為摩卡色；奶油白內搭能讓酒紅與棕調自然銜接。'},
+      {id:'wine-chocolate',name:'Wine × Chocolate',type:'TONAL DEPTH',note:'濃郁、成熟、秋冬材質感',colors:['burgundy','chocolate','taupe','ivory'],target:'bottoms',targetColor:'chocolate',suggestion:'酒紅皮衣搭巧克力色下身，讓皮革與深棕材質形成層次；保留白襯衫作為視覺呼吸。'},
+      {id:'wine-teal',name:'Wine × Teal',type:'BOLD CONTRAST',note:'大膽對比・編輯感十足',colors:['burgundy','teal','charcoal','white'],target:'accessories',targetColor:'teal',suggestion:'保留酒紅外套及黑／炭灰色下身，用青綠色包款或小配件做重點，避免大面積對撞。'},
+      {id:'wine-ivory',name:'Wine × Ivory',type:'SOFT MINIMAL',note:'乾淨明亮、輕奢雅緻',colors:['burgundy','ivory','beige','charcoal'],target:'bottoms',targetColor:'beige',suggestion:'用米白、象牙白下身提亮酒紅主角，再以灰色鞋款平衡整體。'}
+    ],
+    black:[
+      {id:'black-wine',name:'Black × Burgundy',type:'MOODY',note:'暗調與戲劇張力',colors:['black','burgundy','charcoal','silver'],target:'outerwear',targetColor:'burgundy',suggestion:'黑色可以搭酒紅外套增添層次，銀色配件讓深色造型更俐落。'},
+      {id:'black-cream',name:'Black × Cream',type:'CLASSIC',note:'高對比、乾淨簡潔',colors:['black','cream','ivory','taupe'],target:'top',targetColor:'cream',suggestion:'加入奶油白上衣柔化全黑造型，保留俐落輪廓。'},
+      {id:'black-teal',name:'Black × Teal',type:'CONTRAST',note:'清冷、前衛、現代感',colors:['black','teal','silver','charcoal'],target:'accessories',targetColor:'teal',suggestion:'用青綠配件替黑色造型加上冷調焦點，維持其餘中性色。'},
+      {id:'black-khaki',name:'Black × Khaki',type:'UTILITY',note:'街頭、實穿',colors:['black','khaki','cream','olive'],target:'bottoms',targetColor:'khaki',suggestion:'試試卡其色下身搭黑色上衣，以橄欖色或奶油白增加層次。'}
+    ],
+    blue:[
+      {id:'blue-mocha',name:'Denim × Mocha',type:'WARM COOL',note:'冷暖平衡、復古',colors:['blue','mocha','cream','brown'],target:'accessories',targetColor:'brown',suggestion:'丹寧藍與溫暖咖啡色皮件相襯，讓造型更有復古層次。'},
+      {id:'blue-cream',name:'Blue × Cream',type:'CLEAN',note:'清爽耐看',colors:['blue','cream','ivory','charcoal'],target:'top',targetColor:'cream',suggestion:'以柔和奶油白平衡藍色單品，維持清爽而不單薄的色彩結構。'},
+      {id:'blue-wine',name:'Blue × Burgundy',type:'ARTFUL',note:'帶點學院復古',colors:['blue','burgundy','beige','brown'],target:'outerwear',targetColor:'burgundy',suggestion:'利用酒紅外套讓藍色丹寧更有故事感，以米色作為中間色。'},
+      {id:'blue-teal',name:'Blue × Teal',type:'ANALOGOUS',note:'冷色層次',colors:['blue','teal','silver','black'],target:'accessories',targetColor:'teal',suggestion:'深淺不同的藍與青綠形成漸層，適合用銀色細節提亮。'}
+    ],
+    earth:[
+      {id:'earth-wine',name:'Earth × Burgundy',type:'RICH TONES',note:'大地色與酒紅交織',colors:['mocha','burgundy','khaki','ivory'],target:'outerwear',targetColor:'burgundy',suggestion:'大地色穿搭可用酒紅色外套作為主角，讓溫暖色層更有張力。'},
+      {id:'earth-chocolate',name:'Mocha × Chocolate',type:'TONAL',note:'同色系質感層次',colors:['mocha','chocolate','cream','taupe'],target:'bottoms',targetColor:'chocolate',suggestion:'從摩卡過渡到深巧克力色，透過質料與明度差做出層次。'},
+      {id:'earth-teal',name:'Khaki × Teal',type:'ARTFUL',note:'沈穩與冷調對比',colors:['khaki','teal','cream','chocolate'],target:'accessories',targetColor:'teal',suggestion:'大地色底色適合搭少量青綠色配件，讓自然色系更有鮮明重點。'},
+      {id:'earth-ivory',name:'Taupe × Ivory',type:'MINIMAL',note:'柔和、簡約',colors:['taupe','ivory','mocha','black'],target:'top',targetColor:'ivory',suggestion:'選擇象牙白上衣平衡棕灰色系，保留乾淨的整體比例。'}
+    ],
+    green:[
+      {id:'green-cream',name:'Olive × Cream',type:'HARMONIOUS',note:'安靜的自然感',colors:['olive','cream','khaki','chocolate'],target:'top',targetColor:'cream',suggestion:'橄欖色與奶油白、卡其很協調，適合打造自然的中性配色。'},
+      {id:'green-wine',name:'Teal × Wine',type:'CONTRAST',note:'藝術氣質、對比鮮明',colors:['teal','burgundy','charcoal','ivory'],target:'outerwear',targetColor:'burgundy',suggestion:'用酒紅與青綠製造冷暖對比，其他單品保持深灰與白色。'},
+      {id:'green-mocha',name:'Forest × Mocha',type:'EARTHY',note:'沉穩溫暖',colors:['green','mocha','taupe','cream'],target:'bottoms',targetColor:'mocha',suggestion:'綠色主體配摩卡色下身，能讓自然色調更完整。'},
+      {id:'green-black',name:'Teal × Black',type:'FUTURISTIC',note:'都市夜色、極簡酷感',colors:['teal','black','silver','charcoal'],target:'bottoms',targetColor:'black',suggestion:'保留青綠重點，其他大面積改用黑與炭灰，適合前衛造型。'}
+    ],
+    neutral:[
+      {id:'neutral-wine',name:'Neutral × Wine',type:'HERO COLOR',note:'中性底色、紅色重點',colors:['ivory','burgundy','charcoal','taupe'],target:'outerwear',targetColor:'burgundy',suggestion:'在簡單的中性色搭配中加入酒紅外套，立刻帶出鮮明主角。'},
+      {id:'neutral-khaki',name:'Ivory × Khaki',type:'SOFT',note:'柔和、日常',colors:['ivory','khaki','mocha','white'],target:'bottoms',targetColor:'khaki',suggestion:'白或米色上衣搭卡其色下身，能兼具柔和色調與乾淨比例。'},
+      {id:'neutral-teal',name:'Ivory × Teal',type:'ACCENT',note:'乾淨底色＋跳色',colors:['ivory','teal','charcoal','silver'],target:'accessories',targetColor:'teal',suggestion:'用青綠配件點亮大面積中性色，避免整套過於平淡。'},
+      {id:'neutral-mocha',name:'Cream × Mocha',type:'TONAL',note:'柔和、質感',colors:['cream','mocha','chocolate','ivory'],target:'bottoms',targetColor:'mocha',suggestion:'用摩卡色下身搭奶油色上衣，做出溫柔的明度漸層。'}
+    ]
+  };
+  const isMatchColor=(item,key)=>{
+    if(!item||!SWATCH[key])return false;
+    const t=[item.color,item.name,item.notes].join(' ').toLowerCase();
+    return SWATCH[key].keys.some(x=>t.includes(x.toLowerCase()));
+  };
+  function itemColorKey(item){
+    if(!item)return null;
+    const t=[item.color,item.name].join(' ').toLowerCase();
+    const keys=['burgundy','chocolate','charcoal','teal','khaki','mocha','cream','ivory','taupe','olive','silver','pink','purple','black','white','beige','brown','blue','green'];
+    return keys.find(k=>SWATCH[k].keys.some(x=>t.includes(x.toLowerCase())))||null;
+  }
+  function chosenItems(){return Object.values(state.draft.items||{}).map(byId).filter(Boolean);}
+  function heroColor(){
+    if(colorAnchorManual&&SWATCH[colorAnchorManual])return colorAnchorManual;
+    const ordered=['outerwear','top','bottoms','shoes','accessories'];
+    for(const s of ordered){const key=itemColorKey(byId(state.draft.items[s]));if(key&&!['black','white','charcoal','ivory','cream','beige'].includes(key))return key;}
+    for(const s of ordered){const key=itemColorKey(byId(state.draft.items[s]));if(key)return key;}
+    return 'burgundy';
+  }
+  function palettesForLook(){
+    const hero=heroColor();
+    if(hero==='burgundy'||hero==='pink'||hero==='purple')return PALETTE_STORIES.burgundy;
+    if(hero==='black'||hero==='charcoal')return PALETTE_STORIES.black;
+    if(hero==='blue')return PALETTE_STORIES.blue;
+    if(['brown','mocha','chocolate','khaki','taupe','beige'].includes(hero))return PALETTE_STORIES.earth;
+    if(['green','teal','olive'].includes(hero))return PALETTE_STORIES.green;
+    return PALETTE_STORIES.neutral;
+  }
+  function focusedPalette(){return palettesForLook().find(p=>p.id===paletteFocus)||palettesForLook().find(p=>p.id===state.draft.paletteChoice)||palettesForLook()[0];}
+  function paletteMatch(p){
+    if(!p||!p.target)return null;
+    const candidates=state.clothes.filter(item=>item.category===p.target&&isMatchColor(item,p.targetColor));
+    const clean=candidates.filter(i=>i.id!==state.draft.items[p.target]);
+    return clean[0]||null;
+  }
+  function renderChromatic(){
+    const items=chosenItems();const hero=heroColor();
+    const distinct=[...new Set(items.map(itemColorKey).filter(Boolean))];
+    if(!distinct.length)distinct.push(hero);
+    document.getElementById('colorAnchorLabel').textContent=`主色：${SWATCH[hero].label}${colorAnchorManual?'（手動）':'（推薦）'}`;
+    document.getElementById('currentSwatches').innerHTML=distinct.slice(0,5).map(k=>`<span class="current-swatch"><i style="background:${SWATCH[k].hex}"></i><small>${SWATCH[k].label}</small></span>`).join('');
+    document.getElementById('colorAnalysis').textContent=items.length?`目前選了 ${items.length} 件單品，以「${SWATCH[hero].label}」為主色；推薦色卡是穿搭方向，並不代表衣櫥裡已有全部顏色。`:'尚未加入單品，先以酒紅色作為示範主色。選擇左側衣服會更新分析。';
+    document.getElementById('anchorPicker').innerHTML=distinct.concat(['burgundy','black','blue','mocha','teal','ivory'].filter(k=>!distinct.includes(k))).map(k=>`<button type="button" data-anchor="${k}"><span class="color-dot" style="background:${SWATCH[k].hex}"></span>${SWATCH[k].label}</button>`).join('')+'<button type="button" data-anchor="auto">自動判斷</button>';
+    const palettes=palettesForLook();
+    if(!palettes.some(p=>p.id===paletteFocus))paletteFocus=state.draft.paletteChoice&&palettes.some(p=>p.id===state.draft.paletteChoice)?state.draft.paletteChoice:palettes[0].id;
+    document.getElementById('paletteCount').textContent=`${palettes.length} 組配色方向`;
+    document.getElementById('paletteList').innerHTML=palettes.map(p=>`<button type="button" class="palette-card ${p.id===paletteFocus?'active':''}" data-palette="${p.id}" aria-pressed="${p.id===paletteFocus}"><span class="palette-card-top"><strong>${esc(p.name)}</strong><small class="palette-type">${esc(p.type)}</small></span><p>${esc(p.note)}</p><span class="palette-strip">${p.colors.map(k=>`<i style="background:${SWATCH[k].hex}" title="${SWATCH[k].label}"></i>`).join('')}</span></button>`).join('');
+    const p=focusedPalette(),matched=paletteMatch(p),isLocked=(state.draft.locked||[]).includes(p.target);
+    document.getElementById('paletteDetail').innerHTML=`<h4>${esc(p.name)}</h4><p class="palette-intro">${esc(p.note)} · ${esc(p.type)}</p><div class="palette-pieces">${p.colors.map(k=>`<span class="palette-piece"><i style="background:${SWATCH[k].hex}"></i>${SWATCH[k].label}</span>`).join('')}</div><div class="palette-guidance"><strong>穿搭提案</strong><div>${esc(p.suggestion)}</div></div>
+    <div class="inventory-result"><span class="result-mark">${matched?esc(matched.emoji||EMOJI[matched.category]):'⌕'}</span><span class="result-copy">${matched?`<strong>衣櫥找到：${esc(matched.name)}</strong><small>可替換${CAT[p.target]} · ${isLocked?'目前已鎖定':'先預覽，確認後才套用'}</small>`:`<strong>衣櫥目前沒有符合的「${SWATCH[p.targetColor].label}」${CAT[p.target]}</strong><small>配色仍可作為靈感，不會虛構單品。</small>`}</span></div>
+    <div class="palette-actions"><button type="button" class="btn small" id="pinPaletteBtn">♡ 保存配色方向</button>${matched?`<button type="button" class="btn primary small" id="tryPaletteBtn" ${isLocked?'disabled':''}>預覽替換</button>`:`<button type="button" class="btn primary small" id="addPaletteItemBtn">＋ 新增對應衣物</button>`}</div>`;
+    const swatches=p.colors.map(k=>`<i title="${SWATCH[k].label}" style="background:${SWATCH[k].hex}"></i>`).join('');
+    document.getElementById('canvasPaletteName').textContent=state.draft.paletteChoice===p.id?p.name:`靈感預覽 · ${p.name}`;
+    document.getElementById('canvasPaletteSwatches').innerHTML=swatches;
+  }
+  function focusPalette(id){
+    const found=palettesForLook().find(p=>p.id===id);if(!found)return;
+    paletteFocus=id;renderChromatic();toast(`正在預覽「${found.name}」，衣物尚未變動。`);
+  }
+  function pinPalette(){
+    const p=focusedPalette();if(!p)return;
+    snapshot();state.draft.paletteChoice=p.id;state.draft.dirty=true;persist();renderStudio();toast(`已保存「${p.name}」的配色方向。`);
+  }
+  function tryPalette(){
+    const p=focusedPalette(),item=paletteMatch(p);if(!p||!item)return;
+    if((state.draft.locked||[]).includes(p.target)){toast('此穿搭位置已鎖定，請先解除鎖定。');return;}
+    const old=byId(state.draft.items[p.target]);
+    proposal={type:'proposal',changes:[{action:old?'replace':'add',slot:p.target,itemId:item.id,oldId:old?.id||null,reason:`Chromatic 配色建議：${p.name}`}],explanations:[p.suggestion],question:'',original:{...state.draft.items}};
+    renderProposal();document.getElementById('proposalHost').scrollIntoView({behavior:'smooth',block:'nearest'});toast('已在風格助理中建立替換預覽，確認後才會修改穿搭。');
+  }
+  function colorCommand(text){
+    if(/背景|生成|場景|氛圍|影像|圖片|壁紙/i.test(text))return null;
+    if(!/(配色|色卡|顏色|色系|搭什麼|酒紅.{0,5}(?:[+＋×]|和|搭)|[+＋×].{0,4}(?:卡其|摩卡|巧克力|青綠))/i.test(text))return null;
+    const cues=[['teal',/青綠|teal|藍綠/i],['khaki',/卡其|khaki/i],['mocha',/摩卡|mocha/i],['chocolate',/巧克力|chocolate/i],['ivory',/象牙|米白|米色|奶油|cream/i]];
+    const desired=cues.find(([key,re])=>re.test(text));
+    const palettes=palettesForLook();
+    const palette=desired?palettes.find(p=>p.colors.includes(desired[0])&&(p.targetColor===desired[0]||p.colors[1]===desired[0])):palettes[0];
+    return palette||null;
+  }
+
+  // MOOD LAB: offline, procedural illustration. Not a diffusion model; no untruthful AI claims.
+  function hashText(text){let h=2166136261>>>0;for(const c of text){h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;}return h>>>0;}
+  function rngFor(seed){let s=seed>>>0;return ()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+  function circle(ctx,x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+  function rect(ctx,x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h);}
+  function gradientFill(ctx,w,h,stops){const g=ctx.createLinearGradient(0,0,w,h);stops.forEach(([pos,c])=>g.addColorStop(pos,c));ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
+  // GENERATIVE MOOD LAB v3
+  // Compositional browser-based illustration, NOT a text-to-image diffusion model.
+  // Prompts are decomposed into subject, setting, atmosphere, motion, and colors.
+  // All illustrations are drawn from geometry, no fixed prompt->image lookup.
+  const SCENE_CONCEPTS=[
+    {id:'racing',name:'競速場景',match:/\b(?:f[ -]?1|formula\s*(?:one|1)|motorsport|racing|race\s*car|grand\s*prix|kart|nascar)\b|賽車|賽道|競速|方程式|飆車|跑車|車手/i,weight:8},
+    {id:'sports',name:'運動場景',match:/\b(?:sports?|athlet\w*|football|soccer|basketball|tennis|running|runner|track\s*and\s*field|stadium|fitness|gym|baseball|skiing|cycling|marathon|boxing|volleyball)\b|運動|體育|球場|球賽|足球|籃球|網球|棒球|跑步|衝刺|田徑|健身|體操|競技|滑雪|馬拉松|拳擊|游泳池|瑜伽|高爾夫|羽球|排球|單車|自行車/i,weight:6},
+    {id:'ocean',name:'海岸與水域',match:/\b(?:ocean|beach|sea|coast|surf|wave|coral|underwater|boat)\b|海洋|海邊|海岸|沙灘|海浪|潛水|水下|游泳|衝浪|帆船/i,weight:6},
+    {id:'mountains',name:'自然山野',match:/\b(?:mountain|forest|valley|nature|jungle|landscape|hiking|alps)\b|森林|山林|高山|山脈|湖泊|山谷|大自然|樹林|登山|雲海/i,weight:5},
+    {id:'space',name:'太空與宇宙',match:/\b(?:space|cosmos|planet|galaxy|universe|moon|astronaut|rocket|satellite)\b|太空|宇宙|銀河|行星|外星|月球|星際|火箭|太空人/i,weight:7},
+    {id:'performance',name:'音樂與舞台',match:/\b(?:concert|music|festival|stage|dj|performance|live\s*show|theater|theatre)\b|演唱會|舞台|音樂節|演出|表演|樂團|樂隊|音樂|劇院|聚光燈/i,weight:5},
+    {id:'cafe',name:'室內與咖啡館',match:/\b(?:cafe|coffee|restaurant|library|interior|lounge|hotel|room)\b|咖啡廳|咖啡館|餐廳|室內|圖書館|酒店|大廳|客廳|房間/i,weight:5},
+    {id:'architecture',name:'建築與線條',match:/\b(?:architecture|brutalism|concrete|gallery|minimalism|museum|building)\b|建築|極簡|美術館|博物館|混凝土|雕塑|幾何|空間設計/i,weight:5},
+    {id:'city',name:'城市與街景',match:/\b(?:city|street|urban|tokyo|hong\s*kong|seoul|nightscape|cyberpunk|neon)\b|城市|街景|都市|街道|東京|香港|首爾|夜景|賽博|霓虹|夜市|巷弄/i,weight:4},
+    {id:'garden',name:'花園與植物',match:/\b(?:flower|floral|garden|botanic|blossom|rose|petals)\b|花海|花園|花卉|玫瑰|植物|櫻花|花朵/i,weight:5}
+  ];
+  const SCENE_COLORS=[
+    {match:/酒紅|勃根地|burgundy|wine\s*red/i,h:342,s:55,l:35},
+    {match:/深紅|鮮紅|紅色|scarlet|crimson|\bred\b/i,h:1,s:80,l:44},
+    {match:/金色|金黃|gold|amber|黃色|yellow/i,h:43,s:79,l:50},
+    {match:/青綠|湖綠|teal|cyan|青藍/i,h:179,s:70,l:43},
+    {match:/藍色|藍調|blue|靛藍/i,h:215,s:74,l:47},
+    {match:/粉紅|桃紅|pink|magenta/i,h:314,s:75,l:53},
+    {match:/紫色|violet|purple/i,h:269,s:68,l:46},
+    {match:/綠色|green|草綠/i,h:137,s:49,l:40},
+    {match:/橘色|orange|橙色/i,h:24,s:80,l:50},
+    {match:/咖啡色|巧克力|棕色|brown|mocha/i,h:23,s:39,l:34},
+    {match:/黑色|black|暗黑/i,h:225,s:23,l:16},
+    {match:/灰白|奶油|米白|白色|white|cream/i,h:40,s:25,l:76}
+  ];
+  function sceneUnderstanding(prompt){
+    const p=(prompt||'').trim();
+    const matches=SCENE_CONCEPTS.filter(x=>x.match.test(p)).sort((a,b)=>b.weight-a.weight);
+    // Let specific subjects take precedence over general qualifiers (e.g. racing in a city).
+    const primary=matches[0]?.id||'editorial';
+    const night=/夜晚|夜間|夜景|深夜|午夜|night|dark|黑夜|雨夜/i.test(p);
+    const dawn=/日出|黎明|晨光|清晨|sunrise|morning/i.test(p);
+    const sunset=/夕陽|黃昏|日落|golden\s*hour|sunset/i.test(p);
+    const rain=/下雨|雨天|雨夜|雨滴|雨中|rain|drizzle|wet\s*street/i.test(p);
+    const snow=/冰雪|下雪|雪景|雪花|snow|winter/i.test(p);
+    const neon=/霓虹|neon|cyberpunk|賽博|螢光|螢幕|未來感|futuristic/i.test(p);
+    const speed=/速度|衝刺|高速|奔馳|疾速|動感|疾馳|fast|speed|rush|sprint|motion/i.test(p)||primary==='racing';
+    const retro=/復古|底片|film|cinematic|電影|1990|90\s*s|老電影|vintage|retro/i.test(p);
+    const minimal=/極簡|簡約|minimal|留白|素色|clean|quiet/i.test(p);
+    const soft=/夢幻|柔和|朦朧|柔霧|soft|dreamy|fog|薄霧|霧氣/i.test(p);
+    const lights=[night?'夜間':dawn?'晨光':sunset?'黃昏':'自然光',rain?'雨景':snow?'雪景':null,neon?'霓虹':null,speed?'動態':null,retro?'底片感':null,minimal?'極簡':null,soft?'柔霧':null].filter(Boolean);
+    const words=Array.from(p.matchAll(/[\u3400-\u9fff]{2,8}|[A-Za-z0-9][A-Za-z0-9_-]{1,15}/g)).map(m=>m[0]).slice(0,12);
+    const declared=SCENE_COLORS.filter(x=>x.match.test(p));
+    const hexes=[...p.matchAll(/#[0-9a-fA-F]{6}\b/g)].map(m=>m[0]);
+    return {primary,sceneLabel:matches[0]?.name||'抽象概念海報',secondary:matches.slice(1,4).map(x=>x.id),
+      night,dawn,sunset,rain,snow,neon,speed,retro,minimal,soft,lights,words,declared,hexes,prompt:p,
+      identifiable:matches.length>0};
+  }
+  function updateSceneUnderstanding(){
+    const el=document.getElementById('sceneUnderstanding');if(!el)return;
+    const p=document.getElementById('backgroundPrompt')?.value.trim()||'';
+    if(!p){el.textContent='輸入描述後，這裡會顯示本機模式理解到的場景元素。';return;}
+    const d=sceneUnderstanding(p);
+    const tags=[d.sceneLabel,...d.lights.slice(0,3)];
+    el.replaceChildren(...tags.map(t=>{const span=document.createElement('span');span.className='scene-tag';span.textContent=t;return span;}));
+    if(!d.identifiable){const small=document.createElement('span');small.className='scene-notice';small.textContent='未辨識具象主體，會以描述文字和抽象元素組成概念海報；具象生圖請選 AI 後端。';el.appendChild(small);}
+  }
+  function sceneHue(d,r){
+    if(d.hexes.length){const h=d.hexes[0];let red=parseInt(h.slice(1,3),16),green=parseInt(h.slice(3,5),16),blue=parseInt(h.slice(5,7),16);const min=Math.min(red,green,blue),max=Math.max(red,green,blue);let hue=0;if(max!==min){const delta=max-min;if(max===red)hue=(green-blue)/delta%6;else if(max===green)hue=(blue-red)/delta+2;else hue=(red-green)/delta+4;hue=(hue*60+360)%360;}return hue;}
+    if(d.declared.length)return d.declared[0].h;
+    const defaults={racing:351,sports:188,ocean:202,mountains:150,space:253,performance:286,cafe:28,architecture:205,city:257,garden:327};
+    if(d.neon)return 276;
+    if(d.sunset)return 24;
+    if(d.minimal)return 208;
+    return defaults[d.primary]??(hashText(d.prompt)%360);
+  }
+  function hslHex(h,s,l){
+    h=((h%360)+360)%360;s/=100;l/=100;
+    const a=s*Math.min(l,1-l);
+    const f=n=>{const k=(n+h/30)%12;const color=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*color).toString(16).padStart(2,'0');};
+    return '#'+f(0)+f(8)+f(4);
+  }
+  function scenePalette(d,r){
+    const hue=sceneHue(d,r),sl=d.minimal?17:56;
+    const primary=hslHex(hue,d.minimal?20:74,d.night?58:58);
+    const secondaryHue=d.declared[1]?.h??(hue+(d.neon?140:58))%360;
+    return {base:hslHex(hue+18,d.minimal?12:42,d.night?7:15),
+      mid:hslHex(hue+5,d.minimal?12:42,d.night?22:33),
+      light:hslHex(hue+25,d.minimal?16:60,d.sunset?78:62),
+      highlight:primary,accent:hslHex(secondaryHue,d.minimal?24:82,d.night?65:55),
+      halo:d.sunset?'#f4a16b':d.dawn?'#f6d9a2':d.neon?'#e45bd6':'#e7c1a1'};
+  }
+  function pathPoly(ctx,points,fill){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();}
+  function lineSeg(ctx,x1,y1,x2,y2,color,width=2){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+  function ellipseFill(ctx,x,y,rx,ry,col){ctx.beginPath();ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();}
+  function glow(ctx,x,y,r,color){const g=ctx.createRadialGradient(x,y,1,x,y,r);g.addColorStop(0,color);g.addColorStop(1,'#00000000');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  function skyline(ctx,r,p,d){
+    for(let layer=0;layer<2;layer++)for(let x=0;x<1090;){
+      const width=24+r()*83,height=(layer?110:50)+r()*210,y=445-height;
+      rect(ctx,x,y,width,height,layer?'#11131cdd':'#121c2899');
+      if(!d.minimal)for(let wx=x+8;wx<x+width-4;wx+=12)for(let wy=y+8;wy<440;wy+=15)if(r()>.64)rect(ctx,wx,wy,3+r()*3,5,d.neon?p.accent+'aa':'#ffc58880');
+      x+=width+3+r()*12;
+    }
+  }
+  function lanePerspective(ctx,p,r){
+    pathPoly(ctx,[[0,460],[1090,449],[1090,590],[0,590]],'#17232b');
+    pathPoly(ctx,[[580,459],[760,456],[1070,590],[230,590]],'#34383dbf');
+    lineSeg(ctx,700,468,830,590,'#ffffff87',6);
+    lineSeg(ctx,580,475,390,590,'#ffd9b977',4);
+    for(let i=0;i<9;i++){const u=i/9;let y=475+u*u*120;rect(ctx,710+u*60,y,3+u*10,2+u*8,'#ffffd1a6');}
+  }
+  function vehicle(ctx,x,y,scale,p,r){
+    ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.rotate((r()-.5)*.075);
+    ellipseFill(ctx,0,54,240,28,'#00000099');
+    // Race car silhouette with separate wings, cockpit, tires and highlighted body.
+    rect(ctx,-173,-20,36,32,'#181b25');rect(ctx,130,-25,45,36,'#191b22');
+    for(const wheel of [-130,135]){circle(ctx,wheel,28,35,'#121317');circle(ctx,wheel,28,21,'#4c525a');circle(ctx,wheel,28,8,'#abb1b4');}
+    pathPoly(ctx,[[-220,-18],[-155,-35],[-70,-36],[-25,-66],[35,-68],[84,-34],[155,-32],[216,-13],[214,12],[-218,12]],p.highlight);
+    pathPoly(ctx,[[-50,-45],[-19,-72],[30,-77],[74,-36]],'#0b1526');
+    pathPoly(ctx,[[-160,-32],[-98,-50],[4,-50],[45,-32]],'#ffffff42');
+    lineSeg(ctx,-175,-6,206,-6,p.light,4);
+    ctx.shadowColor=p.highlight;ctx.shadowBlur=18;lineSeg(ctx,-185,-25,170,-25,p.highlight,10);ctx.shadowBlur=0;
+    pathPoly(ctx,[[188,-35],[236,-38],[245,-23],[196,-15]],'#f1f4f7');
+    rect(ctx,-180,-56,28,42,'#18191d');rect(ctx,-209,-61,68,9,'#171a21');
+    circle(ctx,-28,-54,15,'#10131e');ellipseFill(ctx,-29,-59,12,9,'#d6dce8');
+    ctx.restore();
+  }
+  function raceScene(ctx,r,p,d){
+    glow(ctx,735,160,265,p.halo+'9c');
+    const lineH=415;
+    for(let i=0;i<8;i++){const x=i*158+r()*50;rect(ctx,x,220,9,200,'#161b29');glow(ctx,x,220,56,'#f9ebc7ab');circle(ctx,x,226,6,'#fff4d1');}
+    for(let i=0;i<3;i++){lineSeg(ctx,0,380+i*15,1050,366+i*13,'#a0bdcc4a',3);}
+    for(let i=0;i<190;i++){const x=r()*1050;lineSeg(ctx,x,230+r()*240,x+8+r()*80,235+r()*240,d.rain?'#d0ebff4f':'#d1dbe626',r()*3+.5);}
+    lanePerspective(ctx,p,r);
+    // Spectator stands use scalable geometry instead of a background asset.
+    pathPoly(ctx,[[480,332],[1035,260],[1050,357],[470,402]],'#25283b');
+    for(let i=0;i<70;i++){const x=450+r()*610,y=272+r()*85;rect(ctx,x,y,2+r()*4,3+r()*4,r()>.55?p.accent+'b8':'#dbe5ec8a');}
+    vehicle(ctx,735,440,1.2+r()*.13,p,r);
+    for(let i=0;i<25;i++){const yy=445+r()*170;lineSeg(ctx,480-r()*300,yy,650+r()*100,yy-22,p.accent+'60',1+r()*4);}
+    for(let i=0;i<4;i++){lineSeg(ctx,1030+i*11,520+i*22,810+i*40,490+i*8,'#ffffff55',2);}
+    return '賽道、賽車、燈光與速度線';
+  }
+  function athlete(ctx,x,y,s,p,r,action){
+    ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.rotate((r()-.5)*.12);
+    const a=action||((r()-.5)*.4);
+    circle(ctx,0,-103,19,'#141c27');
+    lineSeg(ctx,0,-84,17,-23,p.highlight,18);
+    lineSeg(ctx,17,-64,68,-95,p.highlight,12);
+    lineSeg(ctx,9,-60,-42,-23,p.light,12);
+    lineSeg(ctx,17,-23,76,14,p.highlight,17);
+    lineSeg(ctx,76,14,101,-10,p.light,12);
+    lineSeg(ctx,17,-23,-41,28,p.highlight,17);
+    lineSeg(ctx,-41,28,-68,69,p.light,12);
+    ellipseFill(ctx,104,-10,20,7,'#faf7f0');ellipseFill(ctx,-66,70,20,7,'#faf7f0');
+    ctx.restore();
+  }
+  function sportsScene(ctx,r,p,d){
+    glow(ctx,760,160,295,d.sunset?'#f9bb7c90':'#d1effa70');
+    pathPoly(ctx,[[0,347],[1050,315],[1050,590],[0,590]],'#143e43');
+    for(let i=0;i<7;i++){ctx.beginPath();ctx.ellipse(700,515,140+i*94,55+i*40,-.10,Math.PI,Math.PI*2);ctx.strokeStyle=i%2?'#ebcb9587':'#e9e3d17f';ctx.lineWidth=6;ctx.stroke();}
+    for(let i=0;i<4;i++){lineSeg(ctx,0,370+i*13,1050,352+i*13,'#f9f5e629',3);}
+    for(let i=0;i<6;i++){const x=80+i*180;lineSeg(ctx,x,170,x,352,'#aab8c370',4);glow(ctx,x,172,58,'#fff4d39b');}
+    for(let i=0;i<45;i++){const x=r()*1050,y=301+r()*80;circle(ctx,x,y,2+r()*3,r()>.5?p.accent+'bb':'#fffbc170');}
+    athlete(ctx,770,502,1.65,p,r);
+    athlete(ctx,570,458,.80,p,r);
+    for(let j=0;j<13;j++)lineSeg(ctx,430-r()*170,360+r()*180,560+r()*60,360+r()*180,'#e5eef14a',1+r()*3);
+    return '運動場、跑道、人物動勢與觀眾燈光';
+  }
+  function oceanScene(ctx,r,p,d){
+    glow(ctx,735,172,215,d.sunset?'#ffbd938b':'#99deff55');
+    circle(ctx,745,185,d.sunset?97:76,d.sunset?'#ffdcadac':'#bad4de8c');
+    pathPoly(ctx,[[0,350],[1050,348],[1050,590],[0,590]],'#0a435d');
+    for(let i=0;i<24;i++){const y=365+i*10;ctx.beginPath();ctx.moveTo(0,y);for(let x=0;x<=1050;x+=20)ctx.lineTo(x,y+Math.sin(x*.016+i*.44)*8);ctx.strokeStyle=i%4===0?'#d6f9ff83':'#54a2bd75';ctx.lineWidth=i%4===0?2:1;ctx.stroke();}
+    for(let i=0;i<150;i++){const x=r()*1050,y=370+r()*220;rect(ctx,x,y,4+r()*33,1+r()*2,r()>.5?'#d4f9ff40':'#f6d9b444');}
+    if(/衝浪|surf|帆船|boat|船/i.test(d.prompt)){
+      pathPoly(ctx,[[745,315],[820,310],[800,365],[772,371]],'#ddeee8c4');lineSeg(ctx,780,232,780,370,'#f3fbff',4);pathPoly(ctx,[[781,240],[781,358],[847,344]],p.light);
+    }
+    return '海面波紋、天際線與光影';
+  }
+  function mountainScene(ctx,r,p,d){
+    glow(ctx,730,150,225,p.halo+'80');
+    circle(ctx,770,180,94,'#fff0b57d');
+    for(let layer=0;layer<5;layer++){
+      const y=315+layer*54;ctx.beginPath();ctx.moveTo(0,590);
+      for(let x=0;x<1120;x+=62)ctx.lineTo(x,y-(r()*105)-Math.sin(x*.006+layer)*25);
+      ctx.lineTo(1050,590);ctx.closePath();ctx.fillStyle=['#c2c7bf53','#8ca8a18c','#517d79bf','#20464fdd','#112c37'][layer];ctx.fill();
+    }
+    for(let i=0;i<85;i++){const x=r()*1050,y=455+r()*140,sz=8+r()*24;pathPoly(ctx,[[x-sz,y+sz],[x,y-sz],[x+sz,y+sz]],'#092a31ab');}
+    return '群山、霧層與樹林';
+  }
+  function spaceScene(ctx,r,p,d){
+    for(let i=0;i<350;i++){const x=r()*1050,y=r()*590;circle(ctx,x,y,r()*1.9,r()>.5?'#ffffffb0':p.accent+'99');}
+    glow(ctx,770,280,310,p.accent+'72');
+    const x=780+r()*50,y=245+r()*45,sz=120+r()*35;
+    circle(ctx,x,y,sz,p.highlight);
+    const g=ctx.createRadialGradient(x-sz*.38,y-sz*.45,3,x,y,sz);g.addColorStop(0,'#ffffff95');g.addColorStop(.45,p.highlight);g.addColorStop(1,'#070e2d');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,sz,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.27);ctx.beginPath();ctx.ellipse(0,0,sz*1.65,sz*.34,0,0,Math.PI*2);ctx.strokeStyle='#e1d6f29c';ctx.lineWidth=18;ctx.stroke();ctx.restore();
+    for(let i=0;i<6;i++)glow(ctx,r()*1050,r()*590,55,p.accent+'55');
+    return '星雲、行星與星光';
+  }
+  function stageScene(ctx,r,p,d){
+    for(let i=0;i<7;i++){const x=370+i*118;pathPoly(ctx,[[x,0],[x+30,0],[x+160+r()*190,590],[x-140-r()*90,590]],i%2?p.accent+'16':'#fffad71f');glow(ctx,x+14,25,70,p.halo+'75');}
+    pathPoly(ctx,[[0,430],[1050,405],[1050,590],[0,590]],'#101321');
+    for(let i=0;i<6;i++){const x=500+i*95;rect(ctx,x,285+r()*60,48,130,'#101825');rect(ctx,x+8,300+r()*50,8,13,p.accent+'a5');}
+    for(let i=0;i<170;i++){let x=r()*1050,y=440+r()*150;circle(ctx,x,y,5+r()*13,r()>.6?'#120f1b':'#1b1724');}
+    for(let i=0;i<48;i++)glow(ctx,r()*1050,430+r()*140,7,r()>.4?p.highlight+'8a':p.accent+'8a');
+    return '舞台燈束、舞台結構與觀眾剪影';
+  }
+  function cafeScene(ctx,r,p,d){
+    rect(ctx,390,120,650,410,'#d7bda420');
+    for(let i=0;i<3;i++){const x=460+i*185;rect(ctx,x,138,151,287,'#151d28bb');rect(ctx,x+9,147,132,265,'#7892a437');lineSeg(ctx,x+76,150,x+76,415,'#ddbf9aa8',5);lineSeg(ctx,x+7,280,x+141,280,'#ddbf9aa8',6);}
+    pathPoly(ctx,[[0,450],[1050,450],[1050,590],[0,590]],'#503c38d9');
+    ellipseFill(ctx,765,435,175,26,p.light);
+    rect(ctx,700,439,14,151,'#211f25');rect(ctx,843,439,14,151,'#211f25');
+    rect(ctx,749,389,80,43,p.highlight);
+    ctx.strokeStyle='#f6e9db';ctx.lineWidth=7;ctx.beginPath();ctx.arc(834,405,16,-1.3,1.3);ctx.stroke();
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(772+i*18,386);ctx.bezierCurveTo(748+i*20,350,802+i*16,342,780+i*18,310);ctx.strokeStyle='#fff0db66';ctx.lineWidth=3;ctx.stroke();}
+    return '窗景、桌面與室內暖光';
+  }
+  function architectureScene(ctx,r,p,d){
+    const base=d.minimal?'#d1d4d26b':'#ced3d850';
+    for(let i=0;i<6;i++){const x=400+i*140+r()*50,y=80+r()*160;pathPoly(ctx,[[x,y],[x+95,y-30],[x+95,570],[x,570]],i%2?base:'#ffffff38');}
+    pathPoly(ctx,[[590,250],[975,150],[1050,260],[1050,590],[590,590]],'#2228319e');
+    pathPoly(ctx,[[695,280],[920,229],[920,550],[695,565]],'#ffffff28');
+    for(let i=0;i<10;i++)lineSeg(ctx,630+i*39,385,650+i*41,590,'#eeeff22a',2);
+    glow(ctx,830,170,255,p.halo+'35');
+    return '空間體塊、幾何線條與建築光影';
+  }
+  function cityScene(ctx,r,p,d){
+    skyline(ctx,r,p,d);
+    pathPoly(ctx,[[0,445],[1050,440],[1050,590],[0,590]],'#111725');
+    for(let i=0;i<38;i++){const x=400+r()*650,y=480+r()*90;rect(ctx,x,y,2+r()*10,5+r()*50,r()>.45?p.accent+'55':p.highlight+'55');}
+    for(let i=0;i<6;i++){const x=460+i*102;lineSeg(ctx,x,0,x+80,590,'#ffffff0d',3);}
+    return '城市天際線與街道路面';
+  }
+  function gardenScene(ctx,r,p,d){
+    mountainScene(ctx,r,p,d);
+    for(let i=0;i<170;i++){
+      const x=350+r()*700,y=380+r()*225,R=3+r()*18;
+      lineSeg(ctx,x,y+R,x+10,y+38,'#1e504c9c',2);
+      const color=[p.highlight,p.accent,'#f9d0b8','#dd9bb3','#f5debc'][Math.floor(r()*5)];
+      for(let petal=0;petal<5;petal++){const a=petal*Math.PI*2/5;circle(ctx,x+Math.cos(a)*R,y+Math.sin(a)*R,R*.68,color);}
+      circle(ctx,x,y,R*.48,'#ffe4a8');
+    }
+    return '花簇、植物、遠景山丘';
+  }
+  function abstractScene(ctx,r,p,d){
+    // Arbitrary concepts get distinct prompt-driven generative editorial artwork.
+    // No pretend photorealistic depiction for subjects the geometry renderer cannot understand.
+    for(let i=0;i<28;i++){
+      ctx.save();ctx.translate(370+r()*780,r()*620);ctx.rotate(r()*Math.PI*2);
+      if(i%3===0){ellipseFill(ctx,0,0,25+r()*130,20+r()*80,p.accent+'44');}
+      else{rect(ctx,-35-r()*35,-100,45+r()*170,80+r()*240,i%2?p.highlight+'44':p.light+'36');}
+      ctx.restore();
+    }
+    for(let i=0;i<10;i++){const x=420+r()*650,y=r()*600;lineSeg(ctx,x,y,x+160+r()*150,y+20+r()*80,p.accent+'aa',1+r()*4);}
+    return '描述驅動的抽象色塊與編輯式排版';
+  }
+  function sceneRainAndSnow(ctx,r,d){
+    if(d.rain){for(let i=0;i<280;i++){const x=r()*1050,y=r()*590;lineSeg(ctx,x,y,x-5-r()*9,y+11+r()*23,'#e5f5ff47',1+r());}}
+    if(d.snow){for(let i=0;i<190;i++){circle(ctx,r()*1050,r()*590,1+r()*3,'#f1f5ff80');}}
+    if(d.soft){ctx.fillStyle='#f3f1e520';ctx.fillRect(0,210,1050,240);}
+  }
+  function sceneTypography(ctx,d,p,r){
+    // Typography is derived from the user's own words; no repeated static poster title.
+    ctx.save();ctx.textAlign='right';ctx.textBaseline='middle';
+    const words=d.words.length?d.words.slice(0,3).join(' / '):'YOUR WORLD';
+    ctx.font='600 22px "Noto Sans TC", Arial, sans-serif';
+    ctx.fillStyle='#ffffff9b';ctx.fillText(words.slice(0,32),1020,53,490);
+    ctx.font='700 10px Arial,sans-serif';ctx.letterSpacing='3px';
+    ctx.fillStyle='#ffffff71';ctx.fillText('WARDROBE OS  ·  SCENE STUDY',1022,80);
+    ctx.restore();
+  }
+  function localScene(prompt,colors,number){
+    const w=1050,h=590,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+    const ctx=canvas.getContext('2d');if(!ctx)throw Error('無法建立 Canvas。');
+    const d=sceneUnderstanding(prompt),r=rngFor(hashText(d.prompt+'|'+number));
+    const p=scenePalette(d,r);
+    gradientFill(ctx,w,h,[[0,p.base],[.55,p.mid],[1,p.base]]);
+    glow(ctx,780,d.dawn?125:225,310,p.halo+'5d');
+    // All categories are combined with environmental modifiers rather than fixed images.
+    let description='';
+    switch(d.primary){
+      case 'racing':description=raceScene(ctx,r,p,d);break;
+      case 'sports':description=sportsScene(ctx,r,p,d);break;
+      case 'ocean':description=oceanScene(ctx,r,p,d);break;
+      case 'mountains':description=mountainScene(ctx,r,p,d);break;
+      case 'space':description=spaceScene(ctx,r,p,d);break;
+      case 'performance':description=stageScene(ctx,r,p,d);break;
+      case 'cafe':description=cafeScene(ctx,r,p,d);break;
+      case 'architecture':description=architectureScene(ctx,r,p,d);break;
+      case 'city':description=cityScene(ctx,r,p,d);break;
+      case 'garden':description=gardenScene(ctx,r,p,d);break;
+      default:description=abstractScene(ctx,r,p,d);
+    }
+    if(d.neon){for(let i=0;i<11;i++){const x=420+r()*700,y=r()*500;lineSeg(ctx,x,y,x+20+r()*150,y+20,p.accent+'a0',2+r()*4);glow(ctx,x,y,40,p.accent+'40');}}
+    if(d.speed && d.primary!=='racing'){for(let i=0;i<27;i++){const x=380+r()*700,y=r()*590;lineSeg(ctx,x,y,x+30+r()*150,y-r()*15,'#ffffff58',1+r()*3);}}
+    sceneRainAndSnow(ctx,r,d);
+    const vig=ctx.createRadialGradient(w*.6,h*.4,45,w*.6,h*.4,715);vig.addColorStop(0,'#00000000');vig.addColorStop(1,'#090c1caa');ctx.fillStyle=vig;ctx.fillRect(0,0,w,h);
+    // Clear reading area on the left; scene and garments remain legible.
+    const left=ctx.createLinearGradient(0,0,650,0);left.addColorStop(0,'#1110208a');left.addColorStop(1,'#00000000');ctx.fillStyle=left;ctx.fillRect(0,0,650,h);
+    for(let i=0;i<5400;i++){rect(ctx,r()*w,r()*h,1,1,r()>.5?'#ffffff13':'#0000000f');}
+    sceneTypography(ctx,d,p,r);
+    ctx.strokeStyle='#ffffff37';ctx.lineWidth=1;ctx.strokeRect(15,15,w-30,h-30);
+    return {url:canvas.toDataURL('image/jpeg',.83),label:d.primary==='editorial'?'CONCEPT STUDY':d.sceneLabel.toUpperCase(),description};
+  }
+
+  function outfitSummary(){return chosenItems().map(item=>({name:item.name,color:item.color,category:CAT[item.category]}));}
+  function setGeneratedBackground(dataUrl,prompt,source,label){
+    snapshot();state.draft.customBg={src:dataUrl,prompt:prompt.slice(0,400),source,label};state.draft.dirty=true;
+    persist();renderStudio();
+  }
+  async function generateBackground(){
+    if(sceneGenerationBusy)return;
+    const prompt=document.getElementById('backgroundPrompt').value.trim();if(!prompt){toast('請先寫下想要的場景或氣氛。');document.getElementById('backgroundPrompt').focus();return;}
+    const source=document.getElementById('bgEngine').value;
+    const btn=document.getElementById('generateBgBtn'),status=document.getElementById('bgStatus');
+    btn.disabled=true;sceneGenerationBusy=true;btn.textContent='正在產生場景…';
+    try{
+      let url='',label='CUSTOM SCENE';
+      if(source==='local'){
+        const result=localScene(prompt,focusedPalette().colors.map(k=>SWATCH[k].hex),Math.random());url=result.url;label=result.label;
+        status.textContent=`本機構圖完成：${result.description}。更改提示詞會改變主體和構圖；重複生成也會出現不同版本。非照片級 AI 生圖。`;
+      }else{
+        const endpoint=document.getElementById('bgEndpoint').value.trim();
+        if(!/^https:\/\/[^\s]+$/i.test(endpoint))throw Error('請填入有效的 HTTPS 後端網址。');
+        status.textContent='正在向你設定的 AI 影像後端送出描述…';
+        const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,outfit:outfitSummary(),palette:focusedPalette().colors.map(k=>({name:SWATCH[k].label,hex:SWATCH[k].hex}))})});
+        if(!response.ok)throw Error(`AI 後端回應 ${response.status}。`);
+        if((response.headers.get('content-type')||'').startsWith('image/')){
+          const blob=await response.blob();if(blob.size>2*1024*1024)throw Error('生成圖片超過 2MB；請讓後端壓縮圖片，以免本機儲存空間不足。');
+          url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
+        }else{
+          const data=await response.json();const raw=data.imageUrl||data.image_url||data.url||data.dataUrl||data.imageBase64||data.b64_json;
+          if(!raw)throw Error('後端未回傳圖片。請回傳 imageUrl、dataUrl 或 image/*。');
+          if(/^data:image\/(?:png|jpe?g|webp);base64,/i.test(raw))url=raw;
+          else if(typeof raw==='string'&&/^https:\/\/[^\s]+$/i.test(raw))url=raw;
+          else if(typeof raw==='string'&&/^[A-Za-z0-9+/=]+$/.test(raw))url='data:image/png;base64,'+raw;
+          else throw Error('後端圖片格式不支援，請回傳 HTTPS 圖片網址或 image data URI。');
+          if(url.length>2_600_000)throw Error('圖片資料太大，請使用較低解析度或壓縮格式。');
+        }
+        status.textContent='AI 後端已回傳圖片，並套用到工作室。';label='AI GENERATED';
+      }
+      setGeneratedBackground(url,prompt,source,label);toast('新的專屬背景已套用，可與穿搭一起儲存。');
+    }catch(error){status.textContent=`生成失敗：${error.message}。本機模式不需要後端，可切換回本機繼續使用。`;toast(`背景生成失敗：${error.message}`);}
+    finally{sceneGenerationBusy=false;btn.disabled=false;btn.textContent='✧ 生成背景';}
+  }
+  function resetBackground(){if(!state.draft.customBg){toast('目前使用的是預設視覺主題。');return;}snapshot();state.draft.customBg=null;state.draft.dirty=true;persist();renderStudio();document.getElementById('bgStatus').textContent='已恢復主題背景。原本輸入的文字仍保留，可再次生成。';toast('已恢復預設視覺主題。');}
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if(raw){const parsed=JSON.parse(raw);if(parsed && Array.isArray(parsed.clothes) && Array.isArray(parsed.outfits)) return parsed;}
+    }catch(e){console.warn("讀取本機資料失敗",e);}
+    const clothes = seed.map(x=>({...x,styleTags:[...x.styleTags]}));
+    return {clothes,outfits:[],draft:{name:"酒紅色日常",items:{outerwear:"seed-1",top:"seed-2",bottoms:"seed-3",shoes:"seed-5",accessories:null}},lastSaved:null};
+  }
+  function persist(){
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(state));return true;}
+    catch(e){toast("儲存失敗：瀏覽器儲存空間可能不足，請移除較大的圖片。");return false;}
+  }
+  function clone(obj){return JSON.parse(JSON.stringify(obj));}
+  function defaultState(){
+    return {clothes:seed.map(x=>({...x,styleTags:[...x.styleTags]})),outfits:[],draft:{name:'酒紅色日常',items:{outerwear:'seed-1',top:'seed-2',bottoms:'seed-3',shoes:'seed-5',accessories:null},locked:[],dirty:false,editingId:null,moodOverride:null,customBg:null,paletteChoice:null},lastSaved:null};
+  }
+  function renderDataSummary(){
+    const el=document.getElementById('dataSummary');
+    if(!el)return;
+    const kb=Math.round(new Blob([JSON.stringify(state)]).size/1024);
+    el.textContent=`${state.clothes.length} 件衣物 · ${state.outfits.length} 套收藏 · 本機資料約 ${kb} KB`;
+  }
+  function exportData(){
+    const payload={format:'wardrobe-os-backup',version:4,exportedAt:new Date().toISOString(),data:clone(state)};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=`Wardrobe-OS-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    toast('已建立完整 JSON 備份。');
+  }
+  function importedDataIsSafeImage(val){
+    return val==null||(typeof val==='string'&&val.length<9000000&&/^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(val));
+  }
+  function validateBackup(raw){
+    if(!raw||raw.format!=='wardrobe-os-backup'||!Number.isInteger(raw.version)||raw.version>4)throw Error('這不是支援的 Wardrobe OS 備份格式。');
+    const data=raw.data;
+    if(!data||!Array.isArray(data.clothes)||!Array.isArray(data.outfits)||!data.draft||typeof data.draft.items!=='object')throw Error('備份的衣櫥、收藏或草稿資料不完整。');
+    if(data.clothes.length>3000||data.outfits.length>3000)throw Error('備份的資料筆數超過限制。');
+    const cats=Object.keys(CAT),idSet=new Set();
+    data.clothes.forEach(c=>{
+      if(!c||typeof c.id!=='string'||c.id.length>100||idSet.has(c.id)||!cats.includes(c.category)||typeof c.name!=='string'||c.name.length>80||!importedDataIsSafeImage(c.imageData))throw Error('衣物資料格式或圖片資料不正確。');
+      idSet.add(c.id);
+      c.color=String(c.color||'其他').slice(0,30);
+      c.styleTags=Array.isArray(c.styleTags)?c.styleTags.filter(x=>typeof x==='string').slice(0,8):[];
+      c.notes=String(c.notes||'').slice(0,1200);
+    });
+    const normalizeItems=(items)=>{
+      const result={};
+      cats.forEach(k=>{const id=items?.[k];result[k]=idSet.has(id)&&data.clothes.find(c=>c.id===id)?.category===k?id:null;});
+      return result;
+    };
+    data.outfits.forEach(o=>{
+      if(!o||typeof o.id!=='string'||typeof o.name!=='string'||o.name.length>80||!Array.isArray(o.itemIds))throw Error('收藏穿搭格式不正確。');
+      if(o.customBg && !safeCustomBackground(o.customBg))o.customBg=null;
+      if(o.items)o.items=normalizeItems(o.items);
+      o.itemIds=o.itemIds.filter(x=>idSet.has(x));
+    });
+    data.draft.items=normalizeItems(data.draft.items);
+    data.draft.locked=Array.isArray(data.draft.locked)?data.draft.locked.filter(x=>cats.includes(x)):[];
+    data.draft.name=String(data.draft.name||'新的穿搭').slice(0,60);
+    if(data.draft.customBg && !safeCustomBackground(data.draft.customBg))data.draft.customBg=null;
+    data.draft.editingId=data.outfits.some(o=>o.id===data.draft.editingId)?data.draft.editingId:null;
+    data.lastSaved=typeof data.lastSaved==='number'?data.lastSaved:null;
+    return {clothes:data.clothes,outfits:data.outfits,draft:data.draft,lastSaved:data.lastSaved};
+  }
+  function safeCustomBackground(bg){return bg&&typeof bg==='object'&&typeof bg.src==='string'&&bg.src.length<9000000&&(importedDataIsSafeImage(bg.src)||/^https:\/\/[^\s"'<>]+$/i.test(bg.src));}
+  async function importData(file){
+    if(!file)return;
+    if(file.size>25000000){toast('檔案超過 25 MB，無法匯入。');return;}
+    try{
+      const parsed=JSON.parse(await file.text());
+      const incoming=validateBackup(parsed);
+      if(!confirm(`確定匯入 ${incoming.clothes.length} 件衣物、${incoming.outfits.length} 套穿搭？目前資料會被取代，建議先匯出備份。`))return;
+      // Write the backup first so quota errors cannot erase the currently open dataset.
+      localStorage.setItem(STORE_KEY,JSON.stringify(incoming));
+      state=incoming;history=[];future=[];replaceSlot=null;proposal=null;colorAnchorManual=incoming.draft.colorAnchorManual||null;paletteFocus=null;
+      document.getElementById('closetSearch').value='';document.getElementById('categoryFilter').value='all';document.getElementById('colorFilter').value='all';
+      renderAll();go('settings');toast('匯入完成。衣櫥與收藏已更新。');
+    }catch(e){toast(`匯入失敗：${e.message}`);}
+  }
+  function resetAllData(){
+    if(!confirm('確定重設本機資料？此動作會刪除目前瀏覽器的所有衣物與收藏，建議先備份。'))return;
+    const fresh=defaultState();
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(fresh));}
+    catch(e){toast('重設失敗：瀏覽器無法寫入本機資料。');return;}
+    state=fresh;history=[];future=[];replaceSlot=null;proposal=null;colorAnchorManual=null;paletteFocus=null;
+    renderAll();go('home');toast('已恢復示範資料。');
+  }
+  function snapshot(){history.push(clone(state.draft));if(history.length>40)history.shift();future=[];updateUndoButtons();}
+  function restoreDraft(d){state.draft=clone(d);persist();renderStudio();}
+  function undo(){if(!history.length){toast("目前沒有可復原的操作。");return;}future.push(clone(state.draft));state.draft=history.pop();persist();renderStudio();updateUndoButtons();toast("已復原上一步。");}
+  function redo(){if(!future.length){toast("目前沒有可重做的操作。");return;}history.push(clone(state.draft));state.draft=future.pop();persist();renderStudio();updateUndoButtons();toast("已重做操作。");}
+  function updateUndoButtons(){document.getElementById("undoBtn").disabled=!history.length;document.getElementById("redoBtn").disabled=!future.length;}
+  function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function byId(id){return state.clothes.find(c=>c.id===id);}
+  function tagsOf(c){return (c.styleTags||[]).join(" ");}
+  function allTags(){return [...new Set(state.clothes.flatMap(c=>c.styleTags||[]).filter(Boolean))];}
+  function imageOrEmoji(item,cls=""){
+    if(item && item.imageData)return `<img class="${cls}" src="${item.imageData}" alt="${esc(item.name)}">`;
+    return `<span class="${cls}">${esc(item?.emoji || EMOJI[item?.category] || "◇")}</span>`;
+  }
+  function visualStyle(item){return `style="background:${COLOR_BG[item?.color]||COLOR_BG["其他"]}"`;}
+  function toast(msg){
+    const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");
+    clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2800);
+  }
+  function go(view){
+    currentView=view;
+    document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+view));
+    document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+    const meta={
+      home:["YOUR STYLE, YOUR RULES","你的風格空間","整理衣櫥、探索靈感，打造真正屬於你的搭配。"],
+      closet:["YOUR DIGITAL CLOSET","我的衣櫥","每件衣物都是靈感的起點。"],
+      discovery:["FIND YOUR NEXT MOOD","風格探索","選一種氛圍，從現有衣物探索新的可能。"],
+      studio:["DESIGN YOUR OWN LOOK","穿搭工作室","保留喜歡的部分，自由修改每一個細節。"],
+      saved:["YOUR PERSONAL LOOKBOOK","我的收藏","把喜歡的組合留下來，之後還能繼續編輯。"],
+      settings:["YOUR DATA, YOUR CONTROL","資料與驗收","檢查功能、管理本機資料並建立備份。"]
+    }[view];
+    document.getElementById("pageEyebrow").textContent=meta[0];document.getElementById("pageTitle").textContent=meta[1];document.getElementById("pageSubtitle").textContent=meta[2];
+    document.getElementById("topAddBtn").style.display=view==="closet"||view==="home"?"inline-block":"none";
+    renderAll();
+    if(view==="studio")document.getElementById("chatInput").placeholder="描述你的想法，例如：保留外套，把褲子換成深灰色的…";
+    if(view==="settings")renderDataSummary();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function renderStats(){
+    document.getElementById("statClothes").textContent=state.clothes.length;
+    document.getElementById("statOutfits").textContent=state.outfits.length;
+    document.getElementById("statStyles").textContent=allTags().length;
+  }
+  function clothingCard(c,withActions=true){
+    return `<article class="clothing-card">
+      <div class="garment-visual" ${visualStyle(c)}><span class="mini-label">${esc(CAT[c.category]||"單品")}</span>${c.imageData?`<img src="${c.imageData}" alt="${esc(c.name)}">`:`<span class="emoji">${esc(c.emoji||EMOJI[c.category]||"◇")}</span>`}</div>
+      <div class="card-body"><div class="card-title" title="${esc(c.name)}">${esc(c.name)}</div>
+      <div class="card-meta">${esc(c.color||"未設定顏色")} · ${esc(CAT[c.category]||"其他")}</div>
+      <div class="tag-row">${(c.styleTags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join("")||'<span class="tag">尚無標籤</span>'}</div>
+      ${withActions?`<div class="card-actions"><button class="btn small" data-add-item="${esc(c.id)}">＋ 搭配</button><button class="btn small" data-edit-item="${esc(c.id)}">編輯</button><button class="btn small danger" data-delete-item="${esc(c.id)}" title="刪除衣物">刪除</button></div>`:""}
+      </div></article>`;
+  }
+  function renderCloset(){
+    const q=(document.getElementById("closetSearch").value||"").trim().toLowerCase();
+    const cat=document.getElementById("categoryFilter").value;
+    const color=document.getElementById("colorFilter").value;
+    const items=state.clothes.filter(c=>(cat==="all"||c.category===cat)&&(color==="all"||c.color===color)&&[c.name,c.color,tagsOf(c),c.notes].join(" ").toLowerCase().includes(q));
+    document.getElementById("closetGrid").innerHTML=items.length?items.map(c=>clothingCard(c)).join(""):`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⌕</div><strong>找不到符合條件的衣物</strong>試著更換搜尋詞，或清除篩選條件。</div>`;
+  }
+  function renderRecent(){
+    const recent=[...state.clothes].slice(-4).reverse();
+    document.getElementById("homeRecent").innerHTML=recent.length?recent.map(c=>clothingCard(c,false)).join(""):`<div class="empty" style="grid-column:1/-1"><strong>衣櫥還是空的</strong>新增第一件衣物，開始建立你的數位衣櫥。</div>`;
+  }
+  function renderMini(){
+    const q=(document.getElementById("miniSearch").value||"").trim().toLowerCase();
+    const list=state.clothes.filter(c=>(miniCat==="all"||c.category===miniCat)&&[c.name,c.color,tagsOf(c)].join(" ").toLowerCase().includes(q));
+    document.getElementById("miniCount").textContent=`${list.length} 件`;
+    document.getElementById("miniList").innerHTML=list.length?list.map(c=>`<button class="mini-item" data-add-item="${esc(c.id)}" title="加入穿搭：${esc(c.name)}">
+      <div class="mini-thumb" ${visualStyle(c)}>${c.imageData?`<img src="${c.imageData}" alt="">`:esc(c.emoji||EMOJI[c.category]||"◇")}</div>
+      <div class="mini-info"><strong>${esc(c.name)}</strong><small>${esc(c.color)} · ${esc(CAT[c.category])}</small></div><span class="add-symbol">＋</span></button>`).join(""):`<div class="empty" style="padding:20px 8px;grid-column:1/-1"><strong>沒有找到衣物</strong><span style="font-size:10px">調整搜尋或先新增衣物。</span></div>`;
+    document.querySelectorAll("[data-mini-cat]").forEach(b=>b.classList.toggle("active",b.dataset.miniCat===miniCat));
+  }
+  function renderStudio(){
+    renderMood();
+    renderChromatic();
+    document.getElementById("outfitName").value=state.draft.name||"新的穿搭";
+    const slots=["outerwear","top","bottoms","shoes","accessories"];
+    document.getElementById("outfitSlots").innerHTML=slots.map(slot=>{
+      const id=state.draft.items[slot];const item=byId(id);const locked=(state.draft.locked||[]).includes(slot);
+      return `<article class="outfit-slot">
+        <div class="slot-visual" ${visualStyle(item)}><span class="slot-label">${CAT[slot]}</span>${item?imageOrEmoji(item):`<div class="slot-empty">尚未選擇<br>點擊「加入」開始</div>`}
+        ${item?`<button class="slot-lock" data-lock-slot="${slot}" title="${locked?"解除鎖定":"鎖定此單品"}">${locked?"🔒":"♧"}</button>`:""}</div>
+        <div class="slot-details"><strong>${esc(item?.name||"尚未選擇")}</strong><small>${item?esc(item.color+" · "+(tagsOf(item)||CAT[slot])):"這個位置還是空的"}</small>
+        <div class="slot-actions"><button class="btn small" data-replace-slot="${slot}">${item?"更換":"＋ 加入"}</button>${item?`<button class="btn small" data-remove-slot="${slot}">移除</button>`:""}</div></div>
+      </article>`;
+    }).join("");
+    const selected=slots.map(s=>state.draft.items[s]).filter(Boolean).length;
+    document.getElementById("canvasSummary").textContent=`已選擇 ${selected} 件單品 · ${slots.length-selected} 個空位`;
+    document.getElementById("canvasStatus").textContent=state.draft.dirty?"未儲存變更":"編輯中";
+    renderMini();updateUndoButtons();renderProposal();
+  }
+  function outfitCard(outfit){
+    const items=(outfit.itemIds||[]).map(byId).filter(Boolean);
+    return `<article class="saved-card"><div class="saved-preview">${Array.from({length:4},(_,i)=>{const it=items[i];return `<div class="saved-mini" ${visualStyle(it)}>${it?imageOrEmoji(it):"◇"}</div>`}).join("")}</div>
+    <div class="saved-body"><h3>${esc(outfit.name)}</h3><p>${outfit.moodOverride&&MOODS[outfit.moodOverride]?"✧ "+MOODS[outfit.moodOverride].label+" · ":""}${items.length} 件單品 · ${outfit.updatedAt?new Date(outfit.updatedAt).toLocaleDateString("zh-TW"):"已收藏"}</p>
+    <div class="saved-actions"><button class="btn small" data-edit-outfit="${esc(outfit.id)}">繼續編輯</button><button class="btn small" data-duplicate-outfit="${esc(outfit.id)}">複製</button><button class="btn small danger" data-delete-outfit="${esc(outfit.id)}">刪除</button></div></div></article>`;
+  }
+  function renderSaved(){
+    document.getElementById("savedGrid").innerHTML=state.outfits.length?state.outfits.slice().reverse().map(outfitCard).join(""):`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">♡</div><strong>你的收藏還是空的</strong>在穿搭工作室完成搭配後，按下「儲存穿搭」，它就會出現在這裡。</div>`;
+    document.getElementById("homeSaved").innerHTML=state.outfits.length?state.outfits.slice(-3).reverse().map(outfitCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>還沒有收藏的穿搭</strong>先試著建立一套屬於自己的組合。</div>`;
+  }
+  function renderDiscovery(){
+    document.getElementById("discoveryGrid").innerHTML=state.clothes.slice(0,8).map(c=>`<article class="clothing-card"><div class="garment-visual" ${visualStyle(c)}>${imageOrEmoji(c,"emoji")}</div><div class="card-body"><div class="card-title">${esc(c.name)}</div><div class="card-meta">${esc(c.color)} · ${esc(CAT[c.category])}</div><button class="btn small" style="width:100%" data-start-item="${esc(c.id)}">從這件開始 →</button></div></article>`).join("")||`<div class="empty" style="grid-column:1/-1"><strong>先加入幾件衣物</strong>有了衣櫥資料，才能開始探索搭配。</div>`;
+  }
+  function renderAll(){renderStats();renderRecent();renderCloset();renderMini();renderStudio();renderSaved();renderDiscovery();}
+  function openModal(){
+    editingClothingId=null;
+    document.getElementById("clothingForm").reset();
+    document.getElementById("modalTitle").textContent="新增衣物";
+    document.getElementById('existingImageControls').hidden=true;
+    document.getElementById('existingImagePreview').removeAttribute('src');
+    document.getElementById("clothingModal").classList.add("open");
+    setTimeout(()=>document.getElementById("itemName").focus(),60);
+  }
+  function editItem(id){
+    const c=byId(id);if(!c)return;
+    openModal();editingClothingId=id;
+    document.getElementById('modalTitle').textContent='編輯衣物';
+    document.getElementById('itemName').value=c.name;
+    document.getElementById('itemCategory').value=c.category;
+    document.getElementById('itemColor').value=[...document.getElementById('itemColor').options].some(o=>o.value===c.color)?c.color:'其他';
+    document.getElementById('itemStyle').value=(c.styleTags||[]).join('、');
+    document.getElementById('itemNotes').value=c.notes||'';
+    const controls=document.getElementById('existingImageControls');
+    controls.hidden=!c.imageData;
+    if(c.imageData)document.getElementById('existingImagePreview').src=c.imageData;
+    setTimeout(()=>document.getElementById('itemName').focus(),60);
+  }
+  function closeModal(){document.getElementById("clothingModal").classList.remove("open");editingClothingId=null;}
+  function addItemToDraft(id,slotOverride=null){
+    const item=byId(id);if(!item)return;
+    const slot=slotOverride||item.category;
+    if(!Object.prototype.hasOwnProperty.call(state.draft.items,slot)){toast("這個類別無法直接放入目前的穿搭位置。");return;}
+    if(item.category!==slot){toast(`類別不符合：${CAT[slot]}只能放入${CAT[slot]}類別的衣物。`);return;}
+    const locked=(state.draft.locked||[]);
+    if(locked.includes(slot)){toast(`${CAT[slot]}已鎖定，請先解除鎖定。`);return;}
+    snapshot();state.draft.items[slot]=id;state.draft.dirty=true;persist();renderStudio();
+    toast(`已將「${item.name}」加入${CAT[slot]}。`);
+  }
+  function removeSlot(slot){
+    if((state.draft.locked||[]).includes(slot)){toast(`${CAT[slot]}已鎖定，請先解除鎖定。`);return;}
+    if(!state.draft.items[slot])return;snapshot();state.draft.items[slot]=null;state.draft.dirty=true;persist();renderStudio();toast(`已移除${CAT[slot]}。`);
+  }
+  function deleteItem(id){
+    const item=byId(id);if(!item)return;
+    if(!confirm(`確定要刪除「${item.name}」嗎？已收藏的穿搭可能會顯示這件衣物已不存在。`))return;
+    state.clothes=state.clothes.filter(c=>c.id!==id);
+    Object.keys(state.draft.items).forEach(k=>{if(state.draft.items[k]===id)state.draft.items[k]=null;});
+    state.outfits.forEach(o=>{o.itemIds=(o.itemIds||[]).filter(x=>x!==id);if(o.items)Object.keys(o.items).forEach(k=>{if(o.items[k]===id)o.items[k]=null;});});
+    persist();renderAll();toast("衣物已刪除；收藏穿搭的其他單品已保留。");
+  }
+  function saveOutfit(){
+    const itemIds=Object.values(state.draft.items).filter(Boolean);
+    if(!itemIds.length){toast("請先至少加入一件衣物，再儲存穿搭。");return;}
+    const name=(state.draft.name||"我的穿搭").trim()||"我的穿搭";
+    const existing=state.draft.editingId?state.outfits.find(o=>o.id===state.draft.editingId):null;
+    if(existing){existing.name=name;existing.moodOverride=state.draft.moodOverride||null;existing.paletteChoice=state.draft.paletteChoice||null;existing.colorAnchorManual=state.draft.colorAnchorManual||null;existing.customBg=state.draft.customBg||null;existing.itemIds=itemIds;existing.items=clone(state.draft.items);existing.updatedAt=new Date().toISOString();}
+    else{const outfit={id:"outfit-"+Date.now()+"-"+Math.random().toString(36).slice(2,6),name,itemIds,items:clone(state.draft.items),moodOverride:state.draft.moodOverride||null,paletteChoice:state.draft.paletteChoice||null,colorAnchorManual:state.draft.colorAnchorManual||null,customBg:state.draft.customBg||null,updatedAt:new Date().toISOString()};state.outfits.push(outfit);state.draft.editingId=outfit.id;}
+    state.draft.dirty=false;state.lastSaved=Date.now();
+    if(persist()){renderAll();toast(existing?"穿搭已更新並儲存。":"穿搭已收藏！你可以稍後再回來編輯。");}
+  }
+  function editOutfit(id){
+    const outfit=state.outfits.find(o=>o.id===id);if(!outfit)return;
+    snapshot();const items={outerwear:null,top:null,bottoms:null,shoes:null,accessories:null};
+    if(outfit.items){for(const slot of Object.keys(items)){const item=byId(outfit.items[slot]);if(item?.category===slot)items[slot]=item.id;}}
+    else (outfit.itemIds||[]).map(byId).filter(Boolean).forEach(item=>{if(items[item.category]!==undefined)items[item.category]=item.id;});
+    state.draft={name:outfit.name,items,locked:[],dirty:false,editingId:outfit.id,moodOverride:outfit.moodOverride||null,paletteChoice:outfit.paletteChoice||null,colorAnchorManual:outfit.colorAnchorManual||null,customBg:outfit.customBg||null};colorAnchorManual=outfit.colorAnchorManual||null;paletteFocus=outfit.paletteChoice||null;document.getElementById("backgroundPrompt").value=outfit.customBg?.prompt||"";
+    persist();go("studio");toast("已載入收藏穿搭，可以繼續調整。");
+  }
+  function duplicateOutfit(id){
+    const outfit=state.outfits.find(o=>o.id===id);if(!outfit)return;
+    editOutfit(id);state.draft.editingId=null;state.draft.name=`${outfit.name} — 副本`;state.draft.dirty=true;
+    persist();renderStudio();toast('已建立穿搭副本草稿，按「儲存穿搭」可另存新收藏。');
+  }
+  function startFromItem(id){
+    const item=byId(id);if(!item)return;
+    snapshot();
+    const items={outerwear:null,top:null,bottoms:null,shoes:null,accessories:null};
+    items[item.category]=id;
+    state.draft={name:`${item.name}的搭配`,items,locked:[],dirty:true,editingId:null,moodOverride:null,customBg:null,paletteChoice:null,colorAnchorManual:null};
+    replaceSlot=null;colorAnchorManual=null;paletteFocus=null;proposal=null;
+    persist();go("studio");toast(`已建立以「${item.name}」為起點的新穿搭，原本的收藏不會被覆寫。`);
+  }
+  function clearOutfit(){
+    if(!confirm("確定要清空目前畫布嗎？已收藏的穿搭不會被刪除。"))return;
+    snapshot();state.draft.items={outerwear:null,top:null,bottoms:null,shoes:null,accessories:null};state.draft.locked=[];state.draft.dirty=true;state.draft.editingId=null;persist();renderStudio();toast("畫布已清空。");
+  }
+  function addBubble(text,who){const log=document.getElementById("chatLog");const el=document.createElement("div");el.className=`bubble ${who}`;el.textContent=text;log.appendChild(el);log.scrollTop=log.scrollHeight;}
+  function findSlotMention(text){
+    if(/褲|裙|下身|牛仔褲|西裝褲/.test(text))return "bottoms";
+    if(/鞋|靴|樂福/.test(text))return "shoes";
+    if(/外套|夾克|大衣|西裝外套/.test(text))return "outerwear";
+    if(/襯衫|上衣|針織|T恤|Ｔ恤/.test(text))return "top";
+    if(/包|配件|皮帶|帽|飾品/.test(text))return "accessories";
+    return null;
+  }
+  function findColorMention(text){
+    const patterns=[["酒紅色",/酒紅|酒紅色|burgundy/i],["黑色",/黑色|黑|深黑/],["白色",/白色|白/],["灰色",/灰色|灰|銀灰/],["棕色",/棕色|咖啡|卡其棕/],["藍色",/藍色|藍/],["米色",/米色|奶油色|米白/],["綠色",/綠色|綠/]];
+    for(const [color,re] of patterns)if(re.test(text))return color;
+    return null;
+  }
+  function styleFromText(text){
+    const styles=[];
+    if(/復古|vintage|retro/i.test(text))styles.push("復古");
+    if(/韓系|韓國|韓風/i.test(text))styles.push("韓系");
+    if(/極簡|簡約|minimal/i.test(text))styles.push("極簡");
+    if(/街頭|streetwear|潮流/i.test(text))styles.push("街頭");
+    if(/正式|成熟|俐落|smart casual/i.test(text))styles.push("正式");
+    if(/休閒|輕鬆|casual/i.test(text))styles.push("休閒");
+    return styles;
+  }
+  function naturalLanguageProposal(text){
+    const current={...state.draft.items};const locked=new Set(state.draft.locked||[]);
+    const changes=[];const explanations=[];let needsClarification=false;let question="";
+    const lower=text.toLowerCase();
+    const slot=findSlotMention(text);const color=findColorMention(text);const styles=styleFromText(text);
+    const saysKeep=/保留|不要換|不要改|一定要留|維持不變/.test(text);
+    const saysReplace=/換|替換|改成|改掉|找一件|改用/.test(text);
+    const saysAdd=/加入|加上|加一件|搭配一件/.test(text);
+    const saysRemove=/移除|拿掉|不要.*(褲|鞋|外套|上衣|配件)/.test(text);
+    const styleWords=/整體|風格|感覺|氛圍|更有|更.*感|正式|休閒|復古|韓系|街頭|極簡/.test(text);
+    if(/復原|回到上一步|撤銷/.test(text)){return {type:"undo",message:"我會幫你復原最近一次編輯。"};}
+    if(/清空畫布|清空整套/.test(text)){return {type:"clear",message:"清空目前畫布會移除這套草稿中的單品，但不會刪除已收藏的穿搭。請使用畫布上的「清空畫布」按鈕確認。"};}
+    if(saysKeep && slot && saysReplace){
+      needsClarification=true;question=`我注意到你同時提到保留${CAT[slot]}和替換${CAT[slot]}。你想保留目前這件，還是換成另一件？`;
+    } else if(slot && saysKeep && !saysReplace){
+      if(!(state.draft.locked||[]).includes(slot)){
+        snapshot();state.draft.locked=Array.from(new Set([...(state.draft.locked||[]),slot]));
+        state.draft.dirty=true;persist();renderStudio();
+      }
+      explanations.push(`已將${CAT[slot]}標記為保留。鎖定設定已儲存，可使用復原按鈕撤銷。`);
+    } else if(slot && (saysReplace||saysAdd||color)){
+      if(locked.has(slot)){
+        needsClarification=true;question=`目前的${CAT[slot]}已鎖定。要先解除鎖定，再替換它嗎？`;
+      }else{
+        const currentItem=byId(current[slot]);
+        const qParts=[];
+        if(color)qParts.push(color);
+        qParts.push(CAT[slot]);
+        const styleMatches=styles.length?styles:[];
+        let candidates=state.clothes.filter(c=>c.category===slot&&c.id!==current[slot]);
+        if(color)candidates=candidates.filter(c=>c.color===color);
+        if(styleMatches.length){const styled=candidates.filter(c=>styleMatches.some(s=>(c.styleTags||[]).includes(s)));if(styled.length)candidates=styled;}
+        const exactName=state.clothes.filter(c=>c.category===slot&&text.toLowerCase().includes(c.name.toLowerCase()));
+        if(exactName.length)candidates=exactName.filter(c=>c.id!==current[slot]);
+        if(candidates.length){
+          candidates.sort((a,b)=>{
+            let sa=0,sb=0;
+            if(color&&a.color===color)sa+=4;if(color&&b.color===color)sb+=4;
+            if(styleMatches.some(s=>(a.styleTags||[]).includes(s)))sa+=2;
+            if(styleMatches.some(s=>(b.styleTags||[]).includes(s)))sb+=2;
+            return sb-sa;
+          });
+          const chosen=candidates[0];
+          changes.push({action:currentItem?"replace":"add",slot,itemId:chosen.id,oldId:current[slot]||null,reason:`「${chosen.name}」符合${qParts.join("、")}的條件。`});
+          explanations.push(`${currentItem?`將${CAT[slot]}由「${currentItem.name}」`: `加入${CAT[slot]}「${chosen.name}」`}調整為「${chosen.name}」。`);
+        }else{
+          const available=state.clothes.filter(c=>c.category===slot);
+          if(color)question=`我在衣櫥裡找不到顏色為「${color}」的${CAT[slot]}。目前有${available.length?available.map(c=>`「${c.name}」（${c.color}）`).join("、"):"尚未登錄任何這個類別的單品"}。你想改用其他顏色，還是先保留目前搭配？`;
+          else question=`我在衣櫥裡沒有找到適合替換的${CAT[slot]}。你可以先新增衣物，或選擇其他類別的單品。`;
+          needsClarification=true;
+        }
+      }
+    }
+    if(saysRemove&&slot){
+      if(locked.has(slot)){needsClarification=true;question=`${CAT[slot]}目前已鎖定。若要移除，請先解除鎖定。`;}
+      else if(current[slot]){changes.push({action:"remove",slot,itemId:null,oldId:current[slot],reason:`依照你的要求移除${CAT[slot]}。`});explanations.push(`移除目前的${CAT[slot]}。`);}
+      else{needsClarification=true;question=`目前穿搭中還沒有選擇${CAT[slot]}，所以沒有東西可以移除。`;}
+    }
+    if(styles.length){
+      const descriptions={復古:"加入復古元素並優先考慮深色、棕色或有經典剪裁的單品",韓系:"優先考慮乾淨層次、俐落比例與協調色彩",極簡:"優先考慮簡潔線條與低彩度搭配",街頭:"優先考慮寬鬆輪廓與休閒單品",正式:"優先考慮西裝褲、襯衫與俐落鞋款",休閒:"優先考慮舒適、輕鬆的日常單品"};
+      explanations.push(`風格方向：${styles.join("、")}。${styles.map(s=>descriptions[s]).join("；")}。`);
+      if(!slot&&!saysReplace&&!saysAdd&&!saysRemove){
+        const filled=Object.entries(current).filter(([s,id])=>id&&!locked.has(s));
+        const ranked=filled.map(([s,id])=>({slot:s,item:byId(id)})).filter(x=>x.item);
+        if(ranked.length){
+          const target=ranked.find(x=>styles.some(s=>(x.item.styleTags||[]).includes(s)));
+          if(target)explanations.push(`目前的「${target.item.name}」已帶有相關風格標籤，可以先保留；你也可以指定要調整哪一個位置。`);
+          else explanations.push("目前衣櫥資料中的風格標籤有限，我先保留現有單品。你可以指定想調整的類別，或從左側衣櫥挑選單品。");
+        }else explanations.push("目前畫布還沒有單品。請先從左側衣櫥加入衣物，我就能依照這個風格方向繼續協助。");
+      }
+    }
+    if(!changes.length&&!explanations.length&&!needsClarification){
+      needsClarification=true;question="我還不確定你想調整哪個部分。你可以試試「把褲子換成黑色」、「保留外套，讓整體更復古」，或「加入棕色配件」。";
+    }
+    return {type:needsClarification?"clarify":"proposal",changes,explanations,question,stylePreferences:styles,constraints:{locked:[...locked]},original:current,userText:text};
+  }
+  function renderProposal(){
+    const host=document.getElementById("proposalHost");
+    if(!proposal){host.innerHTML="";return;}
+    if(proposal.type==="clarify"){
+      host.innerHTML=`<div class="proposal"><h4>需要再確認一下</h4><div style="font-size:11px;line-height:1.7">${esc(proposal.question)}</div><div class="proposal-actions"><button class="btn small" id="dismissProposal">知道了</button><button class="btn small primary" id="addFromClarify">新增衣物</button></div></div>`;
+    }else if(proposal.type==="undo"){
+      host.innerHTML=`<div class="proposal"><h4>復原操作</h4><div class="proposal-item">要復原最近一次編輯嗎？</div><div class="proposal-actions"><button class="btn small primary" id="confirmUndo">復原上一步</button><button class="btn small" id="dismissProposal">取消</button></div></div>`;
+    }else if(proposal.type==="clear"){
+      host.innerHTML=`<div class="proposal"><h4>清空畫布</h4><div class="proposal-item">${esc(proposal.message)}</div><div class="proposal-actions"><button class="btn small" id="dismissProposal">取消</button><button class="btn small danger" id="confirmClear">清空畫布</button></div></div>`;
+    }else{
+      const changes=proposal.changes||[];
+      host.innerHTML=`<div class="proposal"><h4>修改建議預覽</h4>
+        ${proposal.explanations.map(t=>`<div class="proposal-item"><span class="dot">✦</span><span>${esc(t)}</span></div>`).join("")}
+        ${changes.length?changes.map(ch=>{const old=byId(ch.oldId),next=byId(ch.itemId);return `<div class="proposal-item"><span class="dot">↔</span><span>${esc(CAT[ch.slot])}：${esc(old?.name||"空位")} → ${esc(next?.name||"移除")}<br><span style="color:var(--muted)">${esc(ch.reason)}</span></span></div>`;}).join(""):""}
+        <div class="proposal-actions"><button class="btn small" id="dismissProposal">取消</button>${changes.length?`<button class="btn small primary" id="applyProposal">套用修改</button>`:""}</div></div>`;
+    }
+  }
+  function handleNaturalLanguage(){
+    const input=document.getElementById("chatInput");const text=input.value.trim();if(!text)return;
+    addBubble(text,"user");input.value="";
+    if(/生成|產生|製作|設計|畫一張|create|generate/i.test(text)&&/背景|場景|圖片|影像|夜景/i.test(text)){
+      const prompt=text.replace(/^(請|幫我|可以)?\s*(生成|產生|製作|設計|畫一張|create|generate)(一張|一個|一些)?/i,'').trim();
+      document.getElementById('backgroundPrompt').value=prompt||text;
+      addBubble('已把描述放進 Mood Lab。點擊「生成背景」即可用目前選擇的來源建立場景；本機模式不是 AI 生圖。','assistant');
+      document.getElementById('backgroundPrompt').scrollIntoView({behavior:'smooth',block:'center'});return;
+    }
+    const picked=colorCommand(text);
+    if(picked){focusPalette(picked.id);const m=paletteMatch(picked);addBubble(`Chromatic 推薦「${picked.name}」。${picked.suggestion}${m?` 衣櫥裡有「${m.name}」，可到色卡下方預覽替換。`:` 目前衣櫥沒有符合目標色的${CAT[picked.target]}，可先參考配色或新增衣物。`}`,'assistant');proposal=null;renderProposal();return;}
+    const requestedMood=moodFromCommand(text);
+    if(requestedMood){
+      if(requestedMood==='auto'){snapshot();state.draft.moodOverride=null;state.draft.customBg=null;state.draft.dirty=true;persist();renderStudio();addBubble(`已恢復系統推薦，目前背景是「${MOODS[moodKey()].label}」。`,`assistant`);}
+      else {setMood(requestedMood);addBubble(`已將穿搭工作室的背景改成「${MOODS[requestedMood].label}」。衣服沒有變動，你可以繼續調整。`,`assistant`);}
+      proposal=null;renderProposal();return;
+    }
+    proposal=naturalLanguageProposal(text);
+    if(proposal.type==="proposal"){
+      addBubble("我根據目前的穿搭整理了以下建議。你可以先預覽，確認後再套用；目前的畫布尚未被修改。","assistant");
+    }else if(proposal.type==="clarify")addBubble(proposal.question,"assistant");
+    else addBubble(proposal.message,"assistant");
+    renderProposal();
+  }
+  function applyProposal(){
+    if(!proposal||proposal.type!=="proposal"||!proposal.changes?.length)return;
+    snapshot();
+    for(const ch of proposal.changes){
+      if((state.draft.locked||[]).includes(ch.slot)){toast(`${CAT[ch.slot]}已鎖定，已跳過該項修改。`);continue;}
+      state.draft.items[ch.slot]=ch.itemId;
+    }
+    state.draft.dirty=true;persist();const count=proposal.changes.length;proposal=null;renderStudio();addBubble(`已套用 ${count} 項修改。你可以繼續調整，或儲存目前穿搭。`,"assistant");toast("修改已套用；尚未覆蓋已收藏的穿搭。");
+  }
+  function bindEvents(){
+    document.getElementById('sidebarToggle').addEventListener('click',()=>setSidebarCollapsed(!sidebarCollapsed));
+    document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+    document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+    document.getElementById("topAddBtn").addEventListener("click",openModal);
+    document.getElementById("closetAddBtn").addEventListener("click",openModal);
+    document.getElementById("newOutfitBtn").addEventListener("click",()=>{snapshot();state.draft={name:"新的穿搭",items:{outerwear:null,top:null,bottoms:null,shoes:null,accessories:null},locked:[],dirty:false,editingId:null,moodOverride:null,customBg:null,paletteChoice:null,colorAnchorManual:null};colorAnchorManual=null;paletteFocus=null;proposal=null;persist();go("studio");});
+    document.getElementById("topExploreBtn").addEventListener("click",()=>go("discovery"));
+    document.getElementById("closetSearch").addEventListener("input",renderCloset);
+    document.getElementById("categoryFilter").addEventListener("change",renderCloset);
+    document.getElementById("colorFilter").addEventListener("change",renderCloset);
+    document.getElementById("miniSearch").addEventListener("input",renderMini);
+    document.getElementById("miniFilters").addEventListener("click",e=>{const b=e.target.closest("[data-mini-cat]");if(!b)return;miniCat=b.dataset.miniCat;renderMini();});
+    document.getElementById("outfitName").addEventListener("change",e=>{snapshot();state.draft.name=e.target.value.trim()||"新的穿搭";state.draft.dirty=true;persist();renderStudio();});
+    document.getElementById("undoBtn").addEventListener("click",undo);
+    document.getElementById("redoBtn").addEventListener("click",redo);
+    document.getElementById("clearOutfitBtn").addEventListener("click",clearOutfit);
+    document.getElementById("saveOutfitBtn").addEventListener("click",saveOutfit);
+    document.getElementById("moodOptions").addEventListener("click",e=>{const b=e.target.closest('[data-mood-choice]');if(b)setMood(b.dataset.moodChoice);});
+    document.getElementById("moodAutoBtn").addEventListener("click",()=>{snapshot();state.draft.moodOverride=null;state.draft.customBg=null;state.draft.dirty=true;persist();renderStudio();toast(`已恢復自動推薦：${MOODS[moodKey()].label}`);});
+    document.getElementById("moodNextBtn").addEventListener("click",()=>setMood(MOOD_KEYS[(MOOD_KEYS.indexOf(moodKey())+1)%MOOD_KEYS.length]));
+    document.getElementById('backgroundPrompt').addEventListener('input',updateSceneUnderstanding);
+    document.getElementById('bgEngine').addEventListener('change',e=>{document.getElementById('remoteSettings').hidden=e.target.value!=='remote';document.getElementById('bgStatus').textContent=e.target.value==='remote'?'真正 AI 影像需要你自己的 HTTPS 後端服務。請勿在網頁內填入或硬編碼 API 金鑰。':'構圖引擎依提示詞組合主體、場景與氛圍，不只是固定背景清單；抽象或特殊物件仍受限，需真正 AI 後端。';});
+    document.querySelectorAll('[data-gen-example]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('backgroundPrompt').value=b.dataset.genExample;document.getElementById('backgroundPrompt').focus();updateSceneUnderstanding();}));
+    document.getElementById('generateBgBtn').addEventListener('click',generateBackground);
+    document.getElementById('removeBgBtn').addEventListener('click',resetBackground);
+    document.getElementById('changeAnchorBtn').addEventListener('click',()=>{const el=document.getElementById('anchorPicker');el.hidden=!el.hidden;});
+    document.getElementById('anchorPicker').addEventListener('click',e=>{const b=e.target.closest('[data-anchor]');if(!b)return;colorAnchorManual=b.dataset.anchor==='auto'?null:b.dataset.anchor;paletteFocus=null;snapshot();state.draft.colorAnchorManual=colorAnchorManual;state.draft.dirty=true;persist();renderStudio();document.getElementById('anchorPicker').hidden=true;toast('已更新配色分析主色。');});
+    document.getElementById('paletteList').addEventListener('click',e=>{const b=e.target.closest('[data-palette]');if(b)focusPalette(b.dataset.palette);});
+    document.getElementById('paletteDetail').addEventListener('click',e=>{
+      if(e.target.closest('#pinPaletteBtn'))pinPalette();
+      if(e.target.closest('#tryPaletteBtn'))tryPalette();
+      if(e.target.closest('#addPaletteItemBtn')){openModal();const p=focusedPalette();const select=document.getElementById('itemCategory');select.value=p.target;const cc={'khaki':'卡其色','mocha':'摩卡色','chocolate':'巧克力色','teal':'青綠色','cream':'奶油白','ivory':'米色','beige':'米色','black':'黑色','burgundy':'酒紅色','brown':'棕色','charcoal':'炭灰色'};document.getElementById('itemColor').value=cc[p.targetColor]||'其他';document.getElementById('itemName').placeholder=`例如：${SWATCH[p.targetColor].label}${CAT[p.target]}`;}
+    });
+    document.getElementById("sendChatBtn").addEventListener("click",handleNaturalLanguage);
+    document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleNaturalLanguage();}});
+    document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>{document.getElementById("chatInput").value=b.dataset.prompt;document.getElementById("chatInput").focus();}));
+    document.getElementById("outfitSlots").addEventListener("click",e=>{
+      const lock=e.target.closest("[data-lock-slot]");if(lock){const slot=lock.dataset.lockSlot;snapshot();state.draft.locked=state.draft.locked||[];if(state.draft.locked.includes(slot))state.draft.locked=state.draft.locked.filter(s=>s!==slot);else state.draft.locked.push(slot);persist();renderStudio();toast(`${CAT[slot]}${state.draft.locked.includes(slot)?"已鎖定":"已解除鎖定"}。`);return;}
+      const repl=e.target.closest("[data-replace-slot]");if(repl){replaceSlot=repl.dataset.replaceSlot;go("studio");document.getElementById("miniSearch").focus();toast(`請從左側選擇要放入「${CAT[replaceSlot]}」的單品。`);document.getElementById("miniList").scrollIntoView({behavior:"smooth",block:"nearest"});return;}
+      const rem=e.target.closest("[data-remove-slot]");if(rem)removeSlot(rem.dataset.removeSlot);
+    });
+    document.body.addEventListener("click",e=>{
+      const add=e.target.closest("[data-add-item]");if(add){const id=add.dataset.addItem;const item=byId(id);if(!item)return;if(replaceSlot){const target=replaceSlot;
+        if(item.category!==target){toast(`請選擇${CAT[target]}類別的衣物；目前選到${CAT[item.category]}，替換目標仍保留。`);return;}
+        replaceSlot=null;addItemToDraft(id,target);
+      }else addItemToDraft(id);return;}
+      const editItemBtn=e.target.closest('[data-edit-item]');if(editItemBtn){editItem(editItemBtn.dataset.editItem);return;}
+      const del=e.target.closest("[data-delete-item]");if(del){deleteItem(del.dataset.deleteItem);return;}
+      const start=e.target.closest("[data-start-item]");if(start){startFromItem(start.dataset.startItem);return;}
+      const edit=e.target.closest("[data-edit-outfit]");if(edit){editOutfit(edit.dataset.editOutfit);return;}
+      const duplicate=e.target.closest('[data-duplicate-outfit]');if(duplicate){duplicateOutfit(duplicate.dataset.duplicateOutfit);return;}
+      const delOut=e.target.closest("[data-delete-outfit]");if(delOut){const o=state.outfits.find(x=>x.id===delOut.dataset.deleteOutfit);if(o&&confirm(`確定刪除收藏「${o.name}」嗎？`)){state.outfits=state.outfits.filter(x=>x.id!==o.id);if(state.draft.editingId===o.id)state.draft.editingId=null;persist();renderAll();toast("已刪除收藏穿搭。");}return;}
+    });
+    document.getElementById("styleChoices").addEventListener("click",e=>{
+      const b=e.target.closest("[data-style]");if(!b)return;go("studio");const input=document.getElementById("chatInput");input.value=`讓整體更有${b.dataset.style}感`;input.focus();toast(`已選擇「${b.dataset.style}」，可以送出需求讓助理提出建議。`);
+    });
+    document.getElementById("proposalHost").addEventListener("click",e=>{
+      if(e.target.closest("#dismissProposal")){proposal=null;renderProposal();return;}
+      if(e.target.closest("#applyProposal")){applyProposal();return;}
+      if(e.target.closest("#confirmUndo")){undo();proposal=null;renderProposal();return;}
+      if(e.target.closest("#confirmClear")){proposal=null;clearOutfit();renderProposal();return;}
+      if(e.target.closest("#addFromClarify")){proposal=null;renderProposal();openModal();}
+    });
+    document.getElementById("closeModalBtn").addEventListener("click",closeModal);
+    document.getElementById("cancelModalBtn").addEventListener("click",closeModal);
+    document.getElementById("clothingModal").addEventListener("click",e=>{if(e.target.id==="clothingModal")closeModal();});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+    document.getElementById('exportDataBtn').addEventListener('click',exportData);
+    document.getElementById('importDataBtn').addEventListener('click',()=>document.getElementById('importDataFile').click());
+    document.getElementById('importDataFile').addEventListener('change',async e=>{await importData(e.target.files?.[0]);e.target.value='';});
+    document.getElementById('resetAllDataBtn').addEventListener('click',resetAllData);
+    document.getElementById("clothingForm").addEventListener("submit",async e=>{
+      e.preventDefault();
+      const file=document.getElementById("itemImage").files[0];
+      const original=editingClothingId?byId(editingClothingId):null;
+      let imageData=original?.imageData||null;
+      if(document.getElementById('removeItemImage').checked)imageData=null;
+      if(file){
+        if(file.size>1.2*1024*1024){toast("請選擇 1.2 MB 以下的圖片，以免瀏覽器空間不足。");return;}
+        try{imageData=await resizeImage(file,720,.78);}catch(err){toast("圖片讀取失敗，請換一張圖片再試。");return;}
+      }
+      const name=document.getElementById("itemName").value.trim();if(!name)return;
+      const category=document.getElementById("itemCategory").value;
+      const color=document.getElementById("itemColor").value;
+      const styleTags=document.getElementById("itemStyle").value.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean).slice(0,8);
+      const update={name,category,color,styleTags,notes:document.getElementById("itemNotes").value.trim(),imageData,emoji:EMOJI[category]};
+      const previous=clone(state);
+      let item;
+      if(original){
+        const oldCat=original.category;Object.assign(original,update);item=original;
+        if(oldCat!==category){
+          const current=state.draft.items||{};
+          if(current[oldCat]===item.id){current[oldCat]=null;if(!current[category])current[category]=item.id;state.draft.dirty=true;}
+          state.outfits.forEach(o=>{
+            if(!o.items)return;
+            for(const [slot,id] of Object.entries(o.items))if(id===item.id)o.items[slot]=null;
+            if(!o.items[category])o.items[category]=item.id;
+            o.itemIds=Object.values(o.items).filter(Boolean);
+          });
+        }
+      }else{
+        item={id:"item-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),...update,createdAt:new Date().toISOString()};
+        state.clothes.push(item);
+      }
+      if(!persist()){state=previous;return;}
+      const edited=!!original;
+      closeModal();renderAll();toast(edited?`已更新「${name}」。`:`已新增「${name}」。`);
+      if(!edited&&currentView==="studio"&&replaceSlot){const target=replaceSlot;replaceSlot=null;addItemToDraft(item.id,target);}
+    });
+  }
+  function resizeImage(file,maxDim,quality){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();reader.onerror=reject;reader.onload=()=>{
+        const img=new Image();img.onerror=reject;img.onload=()=>{
+          const ratio=Math.min(1,maxDim/Math.max(img.width,img.height));const canvas=document.createElement("canvas");
+          canvas.width=Math.round(img.width*ratio);canvas.height=Math.round(img.height*ratio);
+          const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",quality));
+        };img.src=reader.result;
+      };reader.readAsDataURL(file);
+    });
+  }
+  bindEvents();
+  setSidebarCollapsed(sidebarCollapsed);
+  updateSceneUnderstanding();
+  // A new installation gets sample items so the prototype is immediately explorable.
+  if(!state.draft){state.draft={name:"新的穿搭",items:{outerwear:null,top:null,bottoms:null,shoes:null,accessories:null},locked:[],dirty:false};}
+  if(!state.draft.locked)state.draft.locked=[];
+  persist();renderAll();updateUndoButtons();
+})();
+</script>
+</body>
+</html>
